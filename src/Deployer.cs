@@ -180,7 +180,7 @@ namespace Zongsoft.Utilities
 				foreach(var file in files)
 				{
 					//执行文件复制
-					File.Copy(file.FullName, Path.Combine(this.CurrentDirectory, file.Name), true);
+					this.CopyFile(file.FullName, Path.Combine(this.CurrentDirectory, file.Name));
 
 					//累加文件复制成功计数器
 					Interlocked.Increment(ref _fileCountOfSucced);
@@ -200,7 +200,7 @@ namespace Zongsoft.Utilities
 			}
 
 			//执行文件复制
-			File.Copy(filePath, Path.Combine(this.CurrentDirectory, fileName), true);
+			this.CopyFile(filePath, Path.Combine(this.CurrentDirectory, fileName));
 
 			//累加文件复制成计数器
 			Interlocked.Increment(ref _fileCountOfSucced);
@@ -238,6 +238,20 @@ namespace Zongsoft.Utilities
 				Directory.CreateDirectory(fullPath);
 
 			return fullPath;
+		}
+
+		private void CopyFile(string source, string destination)
+		{
+			if(string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(destination))
+				return;
+
+			bool isCope = true;
+
+			if(File.Exists(destination))
+				isCope = File.GetLastWriteTime(source) > File.GetLastWriteTime(destination);
+
+			if(isCope)
+				File.Copy(source, destination, true);
 		}
 		#endregion
 	}
