@@ -144,7 +144,7 @@ namespace Zongsoft.Utilities
 			switch(item.ItemType)
 			{
 				case ProfileItemType.Section:
-					_currentDirectory = EnsureDirectory(((ProfileSection)item).FullName.Replace(' ', '/'));
+					_currentDirectory = EnsureDirectory(this.Format(((ProfileSection)item).FullName, parameters).Replace(' ', '/').Trim());
 
 					foreach(var child in ((ProfileSection)item).Items)
 						DeployItem(child, parameters);
@@ -162,7 +162,7 @@ namespace Zongsoft.Utilities
 				throw new ArgumentNullException("entry");
 
 			var filePath = this.Format(entry.Name, parameters).Replace('/', Path.DirectorySeparatorChar).Trim();
-			var fileName = Path.GetFileName(filePath);
+			var fileName = string.IsNullOrWhiteSpace(entry.Value) ? Path.GetFileName(filePath) : entry.Value;
 
 			if(fileName.Contains("*") || fileName.Contains("?"))
 			{
