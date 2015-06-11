@@ -28,6 +28,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Linq;
 
 using Zongsoft.Options;
 using Zongsoft.Options.Profiles;
@@ -46,7 +47,7 @@ namespace Zongsoft.Utilities
 			}
 
 			var filePaths = new List<string>();
-			var parameters = new Dictionary<string, string>();
+			var parameters = new Dictionary<string, string>(ToDictionary<string, string>(Environment.GetEnvironmentVariables()), StringComparer.OrdinalIgnoreCase);
 			var deployer = new Deployer(new Zongsoft.Terminals.ConsoleTerminal());
 
 			for(int i = 0; i < args.Length;i++)
@@ -78,6 +79,27 @@ namespace Zongsoft.Utilities
 			{
 				deployer.Deploy(filePath, parameters);
 			}
+		}
+
+		private static IDictionary<TKey, TValue> ToDictionary<TKey, TValue>(System.Collections.IDictionary dictionary, Func<object, TKey> convertKey = null, Func<object, TValue> convertValue = null)
+		{
+			if(dictionary == null)
+				return null;
+
+			var result = new Dictionary<TKey, TValue>(dictionary.Count);
+
+			TKey key;
+			TValue value;
+
+			foreach(System.Collections.DictionaryEntry entry in dictionary)
+			{
+				key = convertKey != null ? convertKey(entry.Key) : Zongsoft.Common.Convert.ConvertValue<TKey>(entry.Key);
+				value = convertValue != null ? convertValue(entry.Value) : Zongsoft.Common.Convert.ConvertValue<TValue>(entry.Value);
+
+				result.Add(key, value);
+			}
+
+			return result;
 		}
 	}
 }
