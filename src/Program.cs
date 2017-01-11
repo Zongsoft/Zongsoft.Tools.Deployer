@@ -1,10 +1,10 @@
 ﻿/*
  * Authors:
- *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
+ *   钟峰(Popeye Zhong) <9555843@qq.com>
  *
  * The MIT License (MIT)
  * 
- * Copyright (C) 2015 Zongsoft Corporation <http://www.zongsoft.com>
+ * Copyright (C) 2015-2017 Zongsoft Corporation <http://www.zongsoft.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,13 +25,8 @@
  */
 
 using System;
-using System.IO;
-using System.Reflection;
 using System.Collections.Generic;
-using System.Linq;
 
-using Zongsoft.Options;
-using Zongsoft.Options.Profiles;
 using Zongsoft.Resources;
 
 namespace Zongsoft.Utilities

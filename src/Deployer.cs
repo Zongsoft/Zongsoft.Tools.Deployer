@@ -1,10 +1,10 @@
 ﻿/*
  * Authors:
- *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
+ *   钟峰(Popeye Zhong) <9555843@qq.com>
  *
  * The MIT License (MIT)
  * 
- * Copyright (C) 2015 Zongsoft Corporation <http://www.zongsoft.com>
+ * Copyright (C) 2015-2017 Zongsoft Corporation <http://www.zongsoft.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,15 +26,14 @@
 
 using System;
 using System.IO;
-using System.Reflection;
 using System.Collections.Generic;
 using System.Threading;
 using System.Text.RegularExpressions;
 
-using Zongsoft.Options;
-using Zongsoft.Options.Profiles;
+using Zongsoft.Services;
 using Zongsoft.Resources;
 using Zongsoft.Terminals;
+using Zongsoft.Options.Profiles;
 
 namespace Zongsoft.Utilities
 {
@@ -119,7 +118,7 @@ namespace Zongsoft.Utilities
 
 			if(!File.Exists(filePath))
 			{
-				_terminal.WriteLine(TerminalColor.Red, ResourceUtility.GetString("Text.DeploymentFileNotExists", filePath));
+				_terminal.WriteLine(CommandOutletColor.Red, ResourceUtility.GetString("Text.DeploymentFileNotExists", filePath));
 				return;
 			}
 
@@ -134,7 +133,7 @@ namespace Zongsoft.Utilities
 			}
 
 			_terminal.WriteLine();
-			_terminal.WriteLine(TerminalColor.DarkGreen, ResourceUtility.GetString("Text.Deploy.CompleteInfo", _fileCountOfSucced + _fileCountOfFailed, _fileCountOfSucced, _fileCountOfFailed));
+			_terminal.WriteLine(CommandOutletColor.DarkGreen, ResourceUtility.GetString("Text.Deploy.CompleteInfo", _fileCountOfSucced + _fileCountOfFailed, _fileCountOfSucced, _fileCountOfFailed));
 		}
 		#endregion
 
@@ -170,8 +169,8 @@ namespace Zongsoft.Utilities
 
 				if(!directory.Exists)
 				{
-					_terminal.Write(TerminalColor.Magenta, ResourceUtility.GetString("Text.Warn"));
-					_terminal.WriteLine(TerminalColor.Yellow, ResourceUtility.GetString("Text.DirectoryNotExists", directory.FullName));
+					_terminal.Write(CommandOutletColor.Magenta, ResourceUtility.GetString("Text.Warn"));
+					_terminal.WriteLine(CommandOutletColor.Yellow, ResourceUtility.GetString("Text.DirectoryNotExists", directory.FullName));
 					return;
 				}
 
@@ -194,8 +193,8 @@ namespace Zongsoft.Utilities
 				//累加文件复制失败计数器
 				Interlocked.Increment(ref _fileCountOfFailed);
 
-				_terminal.Write(TerminalColor.Magenta, ResourceUtility.GetString("Text.Warn"));
-				_terminal.WriteLine(TerminalColor.DarkYellow, ResourceUtility.GetString("Text.FileNotExists", filePath));
+				_terminal.Write(CommandOutletColor.Magenta, ResourceUtility.GetString("Text.Warn"));
+				_terminal.WriteLine(CommandOutletColor.DarkYellow, ResourceUtility.GetString("Text.FileNotExists", filePath));
 				return;
 			}
 
@@ -221,7 +220,7 @@ namespace Zongsoft.Utilities
 				if(string.IsNullOrWhiteSpace(parameter.Key))
 					continue;
 
-				result = Regex.Replace(result, @"\$\(" + parameter.Key + @"\)", parameter.Value, RegexOptions.IgnorePatternWhitespace | RegexOptions.IgnoreCase);
+				result = Regex.Replace(result, @"\$\(" + Common.StringExtension.RemoveCharacters(parameter.Key, @"`~!@#$%^&*()+={}[]\|:;""'<>,.?/") + @"\)", parameter.Value, RegexOptions.IgnorePatternWhitespace | RegexOptions.IgnoreCase);
 			}
 
 			return result;
