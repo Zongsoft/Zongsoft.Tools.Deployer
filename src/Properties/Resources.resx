@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Text.Deploy.CompleteInfo" xml:space="preserve">
-    <value>本次部署总计执行了 {0} 次文件复制操作，其中有 {1} 次成功，有 {2} 次失败。</value>
+    <value>部署“{0}”文件，总计执行了{1}次文件复制（成功{2}次；失败{3}次）。</value>
   </data>
   <data name="Text.DeploymentFileNotExists" xml:space="preserve">
     <value>指定的“{0}”部署配置文件是不存在的。</value>

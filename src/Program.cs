@@ -25,8 +25,10 @@
  */
 
 using System;
+using System.IO;
 using System.Collections.Generic;
 
+using Zongsoft.Services;
 using Zongsoft.Resources;
 
 namespace Zongsoft.Utilities
@@ -41,60 +43,59 @@ namespace Zongsoft.Utilities
 				return;
 			}
 
-			var filePaths = new List<string>();
-			var parameters = new Dictionary<string, string>(ToDictionary<string, string>(Environment.GetEnvironmentVariables()), StringComparer.OrdinalIgnoreCase);
-			var deployer = new Deployer(new Zongsoft.Terminals.ConsoleTerminal());
-
-			for(int i = 0; i < args.Length;i++)
+			try
 			{
-				var arg = args[i].Trim();
+				//使用当前命令行参数构造一个命令表达式
+				var expression = CommandExpression.Parse("deployer " + string.Join(" ", args));
 
-				if(string.IsNullOrWhiteSpace(arg))
-					continue;
+				//创建一个部署文件路径的列表
+				var paths = new List<string>(expression.Arguments.Length);
 
-				if(arg[0] == '/' || arg[0] == '-')
+				//校验所有指定的文件路径是否都存在，并将处理后的路径加入到待处理的列表中
+				foreach(var argument in expression.Arguments)
 				{
-					var parts = arg.Split(':', '=');
+					var path = Path.IsPathRooted(argument) ? argument : Zongsoft.IO.Path.Combine(Environment.CurrentDirectory, argument);
 
-					if(parts.Length == 1)
-						parameters[parts[0].Substring(1)] = null;
-					else if(parts.Length == 2)
-						parameters[parts[0].Substring(1)] = parts[1];
+					if(File.Exists(path))
+						paths.Add(path);
 					else
+						throw new FileNotFoundException(path);
+				}
+
+				//创建部署器类的实例
+				var deployer = new Deployer(new Zongsoft.Terminals.ConsoleTerminal());
+
+				//将命令行选项添加到部署器的环境变量中
+				if(expression.Options.Count > 0)
+				{
+					foreach(var option in expression.Options)
 					{
-						Console.WriteLine(ResourceUtility.GetString("Text.InvalidArgumentFormat", arg));
-						return;
+						deployer.EnvironmentVariables[option.Key] = option.Value;
 					}
 				}
-				else
-					filePaths.Add(arg);
-			}
 
-			foreach(var filePath in filePaths)
+				//依次部署指定的部署文件
+				foreach(var path in paths)
+				{
+					//部署指定的文件
+					var counter = deployer.Deploy(path);
+
+					//打印部署的结果信息
+					deployer.Terminal.WriteLine(CommandOutletColor.DarkGreen, ResourceUtility.GetString("Text.Deploy.CompleteInfo", path, counter.Total, counter.Successes, counter.Failures));
+				}
+			}
+			catch(Exception ex)
 			{
-				deployer.Deploy(filePath, parameters);
+				//设置控制台前景色为“红色”
+				var foregroundColor = Console.ForegroundColor;
+				Console.ForegroundColor = ConsoleColor.Red;
+
+				//打印异常消息
+				Console.Error.WriteLine(ex.Message);
+
+				//重置控制台的前景色
+				Console.ForegroundColor = foregroundColor;
 			}
-		}
-
-		private static IDictionary<TKey, TValue> ToDictionary<TKey, TValue>(System.Collections.IDictionary dictionary, Func<object, TKey> convertKey = null, Func<object, TValue> convertValue = null)
-		{
-			if(dictionary == null)
-				return null;
-
-			var result = new Dictionary<TKey, TValue>(dictionary.Count);
-
-			TKey key;
-			TValue value;
-
-			foreach(System.Collections.DictionaryEntry entry in dictionary)
-			{
-				key = convertKey != null ? convertKey(entry.Key) : Zongsoft.Common.Convert.ConvertValue<TKey>(entry.Key);
-				value = convertValue != null ? convertValue(entry.Value) : Zongsoft.Common.Convert.ConvertValue<TValue>(entry.Value);
-
-				result.Add(key, value);
-			}
-
-			return result;
 		}
 	}
 }

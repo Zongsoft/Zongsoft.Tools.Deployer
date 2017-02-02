@@ -27,7 +27,6 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Threading;
 using System.Text.RegularExpressions;
 
 using Zongsoft.Services;
@@ -39,36 +38,24 @@ namespace Zongsoft.Utilities
 {
 	public class Deployer
 	{
+		#region 常量定义
+		private const string DEPLOYMENTDIRECTORY_PARAMETER = "deploymentDirectory";
+		private const string IGNORERESOLVEDEPLOYMENTFILE_PARAMETER = "ignoreResolve";
+		#endregion
+
 		#region 成员字段
 		private ITerminal _terminal;
-		private string _workingDirectory;
-		private string _currentDirectory;
-
-		private int _fileCountOfSucced;
-		private int _fileCountOfFailed;
+		private IDictionary<string, string> _environmentVariables;
 		#endregion
 
 		#region 构造函数
 		public Deployer(ITerminal terminal)
 		{
 			if(terminal == null)
-				throw new ArgumentNullException("terminal");
+				throw new ArgumentNullException(nameof(terminal));
 
 			_terminal = terminal;
-		}
-
-		public Deployer(ITerminal terminal, string workingDirectory)
-		{
-			if(terminal == null)
-				throw new ArgumentNullException("terminal");
-
-			if(string.IsNullOrWhiteSpace(workingDirectory))
-				throw new ArgumentNullException("workingDirectory");
-
-			if(!File.Exists(workingDirectory))
-				throw new DirectoryNotFoundException(workingDirectory);
-
-			_workingDirectory = workingDirectory;
+			_environmentVariables = Zongsoft.Collections.DictionaryExtension.ToDictionary<string, string>(Environment.GetEnvironmentVariables());
 		}
 		#endregion
 
@@ -88,84 +75,103 @@ namespace Zongsoft.Utilities
 			}
 		}
 
-		public string CurrentDirectory
+		public IDictionary<string, string> EnvironmentVariables
 		{
 			get
 			{
-				return string.IsNullOrWhiteSpace(_currentDirectory) ? this.WorkingDirectory : _currentDirectory;
-			}
-		}
-
-		public string WorkingDirectory
-		{
-			get
-			{
-				return string.IsNullOrWhiteSpace(_workingDirectory) ? Environment.CurrentDirectory : _workingDirectory;
+				return _environmentVariables;
 			}
 		}
 		#endregion
 
 		#region 公共方法
-		public void Deploy(string filePath, IDictionary<string, string> parameters = null)
+		public DeploymentCounter Deploy(string deploymentFilePath, string destinationDirectory = null)
 		{
-			if(string.IsNullOrWhiteSpace(filePath))
-				return;
+			if(string.IsNullOrWhiteSpace(deploymentFilePath))
+				throw new ArgumentNullException(nameof(deploymentFilePath));
 
-			if(Path.IsPathRooted(filePath))
-				_workingDirectory = Path.GetDirectoryName(filePath);
-			else
-				filePath = Path.Combine(this.WorkingDirectory, filePath);
+			if(!Path.IsPathRooted(deploymentFilePath))
+				deploymentFilePath = Zongsoft.IO.Path.Combine(Environment.CurrentDirectory, deploymentFilePath);
 
-			if(!File.Exists(filePath))
+			if(!File.Exists(deploymentFilePath))
+				throw new FileNotFoundException(ResourceUtility.GetString("Text.DeploymentFileNotExists", deploymentFilePath));
+
+			if(string.IsNullOrWhiteSpace(destinationDirectory))
 			{
-				_terminal.WriteLine(CommandOutletColor.Red, ResourceUtility.GetString("Text.DeploymentFileNotExists", filePath));
-				return;
+				if(_environmentVariables.TryGetValue(DEPLOYMENTDIRECTORY_PARAMETER, out destinationDirectory))
+				{
+					if(!Path.IsPathRooted(destinationDirectory))
+						destinationDirectory = Zongsoft.IO.Path.Combine(Environment.CurrentDirectory, destinationDirectory);
+				}
+				else
+				{
+					destinationDirectory = Environment.CurrentDirectory;
+				}
 			}
 
-			_fileCountOfFailed = 0;
-			_fileCountOfSucced = 0;
+			if(!Directory.Exists(destinationDirectory))
+				throw new DirectoryNotFoundException(destinationDirectory);
 
-			var profile = Zongsoft.Options.Profiles.Profile.Load(filePath);
+			//创建部署上下文对象
+			var context = this.CreateContext(deploymentFilePath, destinationDirectory);
 
-			foreach(var item in profile.Items)
+			foreach(var item in context.DeploymentFile.Items)
 			{
-				DeployItem(item, parameters);
+				this.DeployItem(item, context);
 			}
 
-			_terminal.WriteLine();
-			_terminal.WriteLine(CommandOutletColor.DarkGreen, ResourceUtility.GetString("Text.Deploy.CompleteInfo", _fileCountOfSucced + _fileCountOfFailed, _fileCountOfSucced, _fileCountOfFailed));
+			return context.Counter;
+		}
+		#endregion
+
+		#region 虚拟方法
+		protected virtual DeploymentContext CreateContext(string deploymentFilePath, string destinationDirectory)
+		{
+			if(string.IsNullOrWhiteSpace(deploymentFilePath))
+				throw new ArgumentNullException(nameof(deploymentFilePath));
+
+			return new DeploymentContext(this, Profile.Load(deploymentFilePath), destinationDirectory);
 		}
 		#endregion
 
 		#region 私有方法
-		private void DeployItem(ProfileItem item, IDictionary<string, string> parameters)
+		private void DeployItem(ProfileItem item, DeploymentContext context)
 		{
 			switch(item.ItemType)
 			{
 				case ProfileItemType.Section:
-					_currentDirectory = EnsureDirectory(this.Format(((ProfileSection)item).FullName, parameters).Replace(' ', '/').Trim());
+					var section = (ProfileSection)item;
 
-					foreach(var child in ((ProfileSection)item).Items)
-						DeployItem(child, parameters);
+					//确保部署的目标目录已经存在，如不存在则创建它
+					Utility.EnsureDirectory(context.DestinationDirectory, this.Normalize(section.FullName.Replace(' ', '/')));
+
+					foreach(var child in section.Items)
+						this.DeployItem(child, context);
 
 					break;
 				case ProfileItemType.Entry:
-					this.DeployEntry((ProfileEntry)item, parameters);
+					this.DeployEntry((ProfileEntry)item, context);
 					break;
 			}
 		}
 
-		private void DeployEntry(ProfileEntry entry, IDictionary<string, string> parameters)
+		private void DeployEntry(ProfileEntry entry, DeploymentContext context)
 		{
-			if(entry == null)
-				throw new ArgumentNullException("entry");
+			var sourcePath = this.Normalize(entry.Name);
 
-			var filePath = this.Format(entry.Name, parameters).Replace('/', Path.DirectorySeparatorChar).Trim();
-			var fileName = string.IsNullOrWhiteSpace(entry.Value) ? Path.GetFileName(filePath) : entry.Value;
+			if(!Path.IsPathRooted(sourcePath))
+				sourcePath = Zongsoft.IO.Path.Combine(context.SourceDirectory, sourcePath);
 
-			if(fileName.Contains("*") || fileName.Contains("?"))
+			var sourceName = Path.GetFileName(sourcePath);
+			var destinationName = string.IsNullOrWhiteSpace(entry.Value) ? sourceName : this.Normalize(entry.Value);
+			var destinationDirectory = context.DestinationDirectory;
+
+			if(entry.Section != null)
+				destinationDirectory = Zongsoft.IO.Path.Combine(context.DestinationDirectory, this.Normalize(entry.Section.FullName.Replace(' ', '/')));
+
+			if(sourceName.Contains("*") || sourceName.Contains("?"))
 			{
-				var directory = new DirectoryInfo(Path.GetDirectoryName(filePath));
+				var directory = new DirectoryInfo(Path.GetDirectoryName(sourcePath));
 
 				if(!directory.Exists)
 				{
@@ -174,48 +180,61 @@ namespace Zongsoft.Utilities
 					return;
 				}
 
-				var files = directory.EnumerateFiles(fileName);
+				var files = directory.EnumerateFiles(sourceName);
 
 				foreach(var file in files)
 				{
 					//执行文件复制
-					this.CopyFile(file.FullName, Path.Combine(this.CurrentDirectory, file.Name));
-
-					//累加文件复制成功计数器
-					Interlocked.Increment(ref _fileCountOfSucced);
+					if(this.CopyFile(file.FullName, Path.Combine(destinationDirectory, file.Name)))
+						context.Counter.IncrementSuccesses();
+					else
+						context.Counter.IncrementFailures();
 				}
 
 				return;
 			}
 
-			if(!File.Exists(filePath))
+			if(!File.Exists(sourcePath))
 			{
 				//累加文件复制失败计数器
-				Interlocked.Increment(ref _fileCountOfFailed);
+				context.Counter.IncrementFailures();
 
 				_terminal.Write(CommandOutletColor.Magenta, ResourceUtility.GetString("Text.Warn"));
-				_terminal.WriteLine(CommandOutletColor.DarkYellow, ResourceUtility.GetString("Text.FileNotExists", filePath));
+				_terminal.WriteLine(CommandOutletColor.DarkYellow, ResourceUtility.GetString("Text.FileNotExists", sourcePath));
+
 				return;
 			}
 
-			//执行文件复制
-			this.CopyFile(filePath, Path.Combine(this.CurrentDirectory, fileName));
+			//如果指定要拷贝的源文件是一个部署文件
+			if(this.IsDeploymentFile(sourceName))
+			{
+				//如果没有指定忽略处理子部署文件，则进行子部署文件的递归处理
+				if(!_environmentVariables.ContainsKey(IGNORERESOLVEDEPLOYMENTFILE_PARAMETER))
+				{
+					var counter = this.Deploy(sourcePath, destinationDirectory);
 
-			//累加文件复制成计数器
-			Interlocked.Increment(ref _fileCountOfSucced);
+					context.Counter.IncrementFailures(counter.Failures);
+					context.Counter.IncrementSuccesses(counter.Successes);
+
+					return;
+				}
+			}
+
+			//执行文件复制
+			if(this.CopyFile(sourcePath, Path.Combine(destinationDirectory, destinationName)))
+				context.Counter.IncrementSuccesses();
+			else
+				context.Counter.IncrementFailures();
 		}
 
-		private string Format(string text, IDictionary<string, string> parameters)
+		private string Normalize(string text)
 		{
 			if(string.IsNullOrWhiteSpace(text))
 				return string.Empty;
 
-			if(parameters == null || parameters.Count < 1)
-				return text;
-
 			var result = text;
 
-			foreach(var parameter in parameters)
+			foreach(var parameter in _environmentVariables)
 			{
 				if(string.IsNullOrWhiteSpace(parameter.Key))
 					continue;
@@ -226,31 +245,29 @@ namespace Zongsoft.Utilities
 			return result;
 		}
 
-		private string EnsureDirectory(string directoryName)
-		{
-			if(string.IsNullOrWhiteSpace(directoryName))
-				throw new ArgumentNullException("directoryName");
-
-			var fullPath = Path.Combine(this.WorkingDirectory, directoryName.Replace('/', Path.DirectorySeparatorChar));
-
-			if(!Directory.Exists(fullPath))
-				Directory.CreateDirectory(fullPath);
-
-			return fullPath;
-		}
-
-		private void CopyFile(string source, string destination)
+		private bool CopyFile(string source, string destination)
 		{
 			if(string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(destination))
-				return;
+				return false;
 
-			bool isCope = true;
+			bool requiredCope = true;
 
 			if(File.Exists(destination))
-				isCope = File.GetLastWriteTime(source) > File.GetLastWriteTime(destination);
+				requiredCope = File.GetLastWriteTime(source) > File.GetLastWriteTime(destination);
 
-			if(isCope)
+			if(requiredCope)
 				File.Copy(source, destination, true);
+
+			return requiredCope;
+		}
+
+		private bool IsDeploymentFile(string filePath)
+		{
+			if(string.IsNullOrWhiteSpace(filePath))
+				return false;
+
+			//如果指定的文件的扩展名为.deploy，则判断为部署文件
+			return string.Equals(Path.GetExtension(filePath), ".deploy", StringComparison.OrdinalIgnoreCase);
 		}
 		#endregion
 	}
