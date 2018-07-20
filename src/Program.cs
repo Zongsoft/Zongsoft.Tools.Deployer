@@ -63,7 +63,7 @@ namespace Zongsoft.Utilities
 				}
 
 				//创建部署器类的实例
-				var deployer = new Deployer(new Zongsoft.Terminals.ConsoleTerminal());
+				var deployer = new Deployer(Zongsoft.Terminals.ConsoleTerminal.Instance);
 
 				//将命令行选项添加到部署器的环境变量中
 				if(expression.Options.Count > 0)
