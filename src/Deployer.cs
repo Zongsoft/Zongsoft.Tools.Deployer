@@ -239,7 +239,7 @@ namespace Zongsoft.Utilities
 				if(string.IsNullOrWhiteSpace(parameter.Key))
 					continue;
 
-				result = Regex.Replace(result, @"\$\(" + Common.StringExtension.RemoveCharacters(parameter.Key, @"`~!@#$%^&*()+={}[]\|:;""'<>,.?/") + @"\)", parameter.Value, RegexOptions.IgnorePatternWhitespace | RegexOptions.IgnoreCase);
+				result = Regex.Replace(result, @"\$\(" + Common.StringExtension.RemoveAny(parameter.Key, @"`~!@#$%^&*()+={}[]\|:;""'<>,.?/".ToCharArray()) + @"\)", parameter.Value, RegexOptions.IgnorePatternWhitespace | RegexOptions.IgnoreCase);
 			}
 
 			return result;
