@@ -1,6 +1,6 @@
 ﻿/*
  * Authors:
- *   钟峰(Popeye Zhong) <9555843@qq.com>
+ *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
  * The MIT License (MIT)
  * 
@@ -36,10 +36,7 @@ namespace Zongsoft.Utilities
 		#endregion
 
 		#region 构造函数
-		public DeploymentCounter()
-		{
-		}
-
+		public DeploymentCounter() { }
 		public DeploymentCounter(int failures, int successes)
 		{
 			_failures = failures;
@@ -48,29 +45,9 @@ namespace Zongsoft.Utilities
 		#endregion
 
 		#region 公共属性
-		public int Total
-		{
-			get
-			{
-				return _failures + _successes;
-			}
-		}
-
-		public int Failures
-		{
-			get
-			{
-				return _failures;
-			}
-		}
-
-		public int Successes
-		{
-			get
-			{
-				return _successes;
-			}
-		}
+		public int Total => _failures + _successes;
+		public int Failures => _failures;
+		public int Successes => _successes;
 		#endregion
 
 		#region 内部方法

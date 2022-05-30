@@ -1,6 +1,6 @@
 ﻿/*
  * Authors:
- *   钟峰(Popeye Zhong) <9555843@qq.com>
+ *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
  * The MIT License (MIT)
  * 
@@ -32,7 +32,8 @@ using System.Text.RegularExpressions;
 using Zongsoft.Services;
 using Zongsoft.Resources;
 using Zongsoft.Terminals;
-using Zongsoft.Options.Profiles;
+using Zongsoft.Configuration;
+using Zongsoft.Configuration.Profiles;
 
 namespace Zongsoft.Utilities
 {
@@ -45,16 +46,13 @@ namespace Zongsoft.Utilities
 
 		#region 成员字段
 		private ITerminal _terminal;
-		private IDictionary<string, string> _environmentVariables;
+		private readonly IDictionary<string, string> _environmentVariables;
 		#endregion
 
 		#region 构造函数
 		public Deployer(ITerminal terminal)
 		{
-			if(terminal == null)
-				throw new ArgumentNullException(nameof(terminal));
-
-			_terminal = terminal;
+			_terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
 			_environmentVariables = Zongsoft.Collections.DictionaryExtension.ToDictionary<string, string>(Environment.GetEnvironmentVariables());
 		}
 		#endregion
@@ -62,25 +60,13 @@ namespace Zongsoft.Utilities
 		#region 公共属性
 		public ITerminal Terminal
 		{
-			get
-			{
-				return _terminal;
-			}
-			set
-			{
-				if(value == null)
-					throw new ArgumentNullException();
-
-				_terminal = value;
-			}
+			get => _terminal;
+			set => _terminal = value ?? throw new ArgumentNullException();
 		}
 
 		public IDictionary<string, string> EnvironmentVariables
 		{
-			get
-			{
-				return _environmentVariables;
-			}
+			get => _environmentVariables;
 		}
 		#endregion
 
@@ -94,7 +80,7 @@ namespace Zongsoft.Utilities
 				deploymentFilePath = Zongsoft.IO.Path.Combine(Environment.CurrentDirectory, deploymentFilePath);
 
 			if(!File.Exists(deploymentFilePath))
-				throw new FileNotFoundException(ResourceUtility.GetString("Text.DeploymentFileNotExists", deploymentFilePath));
+				throw new FileNotFoundException(ResourceUtility.GetResourceString(typeof(Deployer).Assembly, "Text.DeploymentFileNotExists", deploymentFilePath));
 
 			if(string.IsNullOrWhiteSpace(destinationDirectory))
 			{
@@ -175,8 +161,8 @@ namespace Zongsoft.Utilities
 
 				if(!directory.Exists)
 				{
-					_terminal.Write(CommandOutletColor.Magenta, ResourceUtility.GetString("Text.Warn"));
-					_terminal.WriteLine(CommandOutletColor.Yellow, ResourceUtility.GetString("Text.DirectoryNotExists", directory.FullName));
+					_terminal.Write(CommandOutletColor.Magenta, ResourceUtility.GetResourceString(typeof(Deployer).Assembly, "Text.Warn"));
+					_terminal.WriteLine(CommandOutletColor.Yellow, string.Format(ResourceUtility.GetResourceString(typeof(Deployer).Assembly, "Text.DirectoryNotExists"), directory.FullName));
 					return;
 				}
 
@@ -185,7 +171,7 @@ namespace Zongsoft.Utilities
 				foreach(var file in files)
 				{
 					//执行文件复制
-					if(this.CopyFile(file.FullName, Path.Combine(destinationDirectory, file.Name)))
+					if(CopyFile(file.FullName, Path.Combine(destinationDirectory, file.Name)))
 						context.Counter.IncrementSuccesses();
 					else
 						context.Counter.IncrementFailures();
@@ -199,14 +185,14 @@ namespace Zongsoft.Utilities
 				//累加文件复制失败计数器
 				context.Counter.IncrementFailures();
 
-				_terminal.Write(CommandOutletColor.Magenta, ResourceUtility.GetString("Text.Warn"));
-				_terminal.WriteLine(CommandOutletColor.DarkYellow, ResourceUtility.GetString("Text.FileNotExists", sourcePath));
+				_terminal.Write(CommandOutletColor.Magenta, ResourceUtility.GetResourceString(typeof(Deployer).Assembly, "Text.Warn"));
+				_terminal.WriteLine(CommandOutletColor.DarkYellow, string.Format(ResourceUtility.GetResourceString(typeof(Deployer).Assembly, "Text.FileNotExists"), sourcePath));
 
 				return;
 			}
 
 			//如果指定要拷贝的源文件是一个部署文件
-			if(this.IsDeploymentFile(sourceName))
+			if(IsDeploymentFile(sourceName))
 			{
 				//如果没有指定忽略处理子部署文件，则进行子部署文件的递归处理
 				if(!_environmentVariables.ContainsKey(IGNORERESOLVEDEPLOYMENTFILE_PARAMETER))
@@ -221,7 +207,7 @@ namespace Zongsoft.Utilities
 			}
 
 			//执行文件复制
-			if(this.CopyFile(sourcePath, Path.Combine(destinationDirectory, destinationName)))
+			if(CopyFile(sourcePath, Path.Combine(destinationDirectory, destinationName)))
 				context.Counter.IncrementSuccesses();
 			else
 				context.Counter.IncrementFailures();
@@ -245,7 +231,7 @@ namespace Zongsoft.Utilities
 			return result;
 		}
 
-		private bool CopyFile(string source, string destination)
+		private static bool CopyFile(string source, string destination)
 		{
 			if(string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(destination))
 				return false;
@@ -261,7 +247,7 @@ namespace Zongsoft.Utilities
 			return requiredCope;
 		}
 
-		private bool IsDeploymentFile(string filePath)
+		private static bool IsDeploymentFile(string filePath)
 		{
 			if(string.IsNullOrWhiteSpace(filePath))
 				return false;

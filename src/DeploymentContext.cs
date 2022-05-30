@@ -1,6 +1,6 @@
 ﻿/*
  * Authors:
- *   钟峰(Popeye Zhong) <9555843@qq.com>
+ *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
  * The MIT License (MIT)
  * 
@@ -31,72 +31,25 @@ namespace Zongsoft.Utilities
 {
 	public class DeploymentContext
 	{
-		#region 成员字段
-		private Deployer _deployer;
-		private DeploymentCounter _counter;
-		private string _destinationDirectory;
-		private Zongsoft.Options.Profiles.Profile _deploymentFile;
-		#endregion
-
 		#region 构造函数
-		public DeploymentContext(Deployer deployer, Zongsoft.Options.Profiles.Profile deploymentFile, string destinationDirectory)
+		public DeploymentContext(Deployer deployer, Zongsoft.Configuration.Profiles.Profile deploymentFile, string destinationDirectory)
 		{
-			if(deployer == null)
-				throw new ArgumentNullException(nameof(deployer));
-
-			if(deploymentFile == null)
-				throw new ArgumentNullException(nameof(deploymentFile));
-
 			if(string.IsNullOrWhiteSpace(destinationDirectory))
 				throw new ArgumentNullException(nameof(destinationDirectory));
 
-			_deployer = deployer;
-			_deploymentFile = deploymentFile;
-			_destinationDirectory = destinationDirectory;
-			_counter = new DeploymentCounter();
+			this.Deployer = deployer ?? throw new ArgumentNullException(nameof(deployer));
+			this.DeploymentFile = deploymentFile ?? throw new ArgumentNullException(nameof(deploymentFile));
+			this.DestinationDirectory = destinationDirectory;
+			this.Counter = new DeploymentCounter();
 		}
 		#endregion
 
 		#region 公共属性
-		public Deployer Deployer
-		{
-			get
-			{
-				return _deployer;
-			}
-		}
-
-		public DeploymentCounter Counter
-		{
-			get
-			{
-				return _counter;
-			}
-		}
-
-		public string DestinationDirectory
-		{
-			get
-			{
-				return _destinationDirectory;
-			}
-		}
-
-		public Zongsoft.Options.Profiles.Profile DeploymentFile
-		{
-			get
-			{
-				return _deploymentFile;
-			}
-		}
-
-		public string SourceDirectory
-		{
-			get
-			{
-				return Path.GetDirectoryName(this.DeploymentFile.FilePath);
-			}
-		}
+		public Deployer Deployer { get; init; }
+		public DeploymentCounter Counter { get; init; }
+		public string DestinationDirectory { get; init; }
+		public Zongsoft.Configuration.Profiles.Profile DeploymentFile { get; init; }
+		public string SourceDirectory => Path.GetDirectoryName(this.DeploymentFile.FilePath);
 		#endregion
 	}
 }

@@ -1,6 +1,6 @@
 ﻿/*
  * Authors:
- *   钟峰(Popeye Zhong) <9555843@qq.com>
+ *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
  * The MIT License (MIT)
  * 
@@ -39,7 +39,7 @@ namespace Zongsoft.Utilities
 		{
 			if(args == null || args.Length < 1)
 			{
-				Console.WriteLine(ResourceUtility.GetString("Text.MissingArguments"));
+				Console.WriteLine(ResourceUtility.GetResourceString(typeof(Program).Assembly, "Text.MissingArguments"));
 				return;
 			}
 
@@ -81,7 +81,7 @@ namespace Zongsoft.Utilities
 					var counter = deployer.Deploy(path);
 
 					//打印部署的结果信息
-					deployer.Terminal.WriteLine(CommandOutletColor.DarkGreen, ResourceUtility.GetString("Text.Deploy.CompleteInfo", path, counter.Total, counter.Successes, counter.Failures));
+					deployer.Terminal.WriteLine(CommandOutletColor.DarkGreen, string.Format(ResourceUtility.GetResourceString(typeof(Program).Assembly, "Text.Deploy.CompleteInfo"), path, counter.Total, counter.Successes, counter.Failures));
 				}
 			}
 			catch(Exception ex)

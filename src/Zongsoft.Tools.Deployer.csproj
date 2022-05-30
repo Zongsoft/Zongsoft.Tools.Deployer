@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFrameworks>net5.0</TargetFrameworks>
+		<Version>5.6.0.0</Version>
+		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
+		<PackAsTool>true</PackAsTool>
+		<ToolCommandName>dotnet-deploy</ToolCommandName>
+		<PackageDescription>The Zongsoft Deployment .NET Tool.</PackageDescription>
+		<Company>Zongsoft Studio</Company>
+		<Product>Zongsoft Deployment Tool</Product>
+		<Description>Zongsoft Application Deployment Tool.</Description>
+		<Copyright>Copyright(C) Zongsoft Corporation 2015-2022. All rights reserved.</Copyright>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageProjectUrl>https://github.com/Zongsoft/Zongsoft.Tools.Deployer</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/Zongsoft.Tools.Deployer</RepositoryUrl>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Reference Include="Zongsoft.Core">
+			<HintPath>..\..\Framework\Zongsoft.Core\src\bin\$(Configuration)\net5.0\Zongsoft.Core.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+</Project>
