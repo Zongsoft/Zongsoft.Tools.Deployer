@@ -51,7 +51,7 @@ namespace Zongsoft.Utilities
 		#endregion
 
 		#region 内部方法
-		internal int IncrementFailures(int interval = 1)
+		internal int Fail(int interval = 1)
 		{
 			int result = 0;
 
@@ -61,7 +61,7 @@ namespace Zongsoft.Utilities
 			return result;
 		}
 
-		internal int IncrementSuccesses(int interval = 1)
+		internal int Success(int interval = 1)
 		{
 			int result = 0;
 

@@ -133,7 +133,7 @@
     <value>输入的“{0}”是无效的参数格式。</value>
   </data>
   <data name="Text.MissingArguments" xml:space="preserve">
-    <value>未指定任何发布配置文件。</value>
+    <value>未指定发布文件。</value>
   </data>
   <data name="Text.Warn" xml:space="preserve">
     <value>警告：</value>

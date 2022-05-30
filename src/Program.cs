@@ -39,7 +39,10 @@ namespace Zongsoft.Utilities
 		{
 			if(args == null || args.Length < 1)
 			{
+				Console.ForegroundColor = ConsoleColor.DarkRed;
 				Console.WriteLine(ResourceUtility.GetResourceString(typeof(Program).Assembly, "Text.MissingArguments"));
+				Console.ResetColor();
+
 				return;
 			}
 

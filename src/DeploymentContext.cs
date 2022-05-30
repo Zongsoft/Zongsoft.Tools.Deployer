@@ -32,13 +32,13 @@ namespace Zongsoft.Utilities
 	public class DeploymentContext
 	{
 		#region 构造函数
-		public DeploymentContext(Deployer deployer, Zongsoft.Configuration.Profiles.Profile deploymentFile, string destinationDirectory)
+		public DeploymentContext(Deployer deployer, Zongsoft.Configuration.Profiles.Profile deploymentProfile, string destinationDirectory)
 		{
 			if(string.IsNullOrWhiteSpace(destinationDirectory))
 				throw new ArgumentNullException(nameof(destinationDirectory));
 
 			this.Deployer = deployer ?? throw new ArgumentNullException(nameof(deployer));
-			this.DeploymentFile = deploymentFile ?? throw new ArgumentNullException(nameof(deploymentFile));
+			this.DeploymentProfile = deploymentProfile ?? throw new ArgumentNullException(nameof(deploymentProfile));
 			this.DestinationDirectory = destinationDirectory;
 			this.Counter = new DeploymentCounter();
 		}
@@ -48,8 +48,8 @@ namespace Zongsoft.Utilities
 		public Deployer Deployer { get; init; }
 		public DeploymentCounter Counter { get; init; }
 		public string DestinationDirectory { get; init; }
-		public Zongsoft.Configuration.Profiles.Profile DeploymentFile { get; init; }
-		public string SourceDirectory => Path.GetDirectoryName(this.DeploymentFile.FilePath);
+		public Zongsoft.Configuration.Profiles.Profile DeploymentProfile { get; init; }
+		public string SourceDirectory => Path.GetDirectoryName(this.DeploymentProfile.FilePath);
 		#endregion
 	}
 }
