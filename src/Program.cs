@@ -57,7 +57,7 @@ namespace Zongsoft.Utilities
 				//校验所有指定的文件路径是否都存在，并将处理后的路径加入到待处理的列表中
 				foreach(var argument in expression.Arguments)
 				{
-					var path = Path.IsPathRooted(argument) ? argument : Zongsoft.IO.Path.Combine(Environment.CurrentDirectory, argument);
+					var path = Path.IsPathRooted(argument) ? argument : Path.Combine(Environment.CurrentDirectory, argument);
 
 					if(File.Exists(path))
 						paths.Add(path);
@@ -73,7 +73,7 @@ namespace Zongsoft.Utilities
 				{
 					foreach(var option in expression.Options)
 					{
-						deployer.EnvironmentVariables[option.Key] = option.Value;
+						deployer.Variables[option.Key] = option.Value;
 					}
 				}
 

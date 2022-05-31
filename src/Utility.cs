@@ -39,7 +39,7 @@ namespace Zongsoft.Utilities
 			if(paths.Length == 0)
 				return string.Empty;
 
-			var fullPath = Zongsoft.IO.Path.Combine(paths);
+			var fullPath = Path.Combine(paths);
 
 			if(!Directory.Exists(fullPath))
 				Directory.CreateDirectory(fullPath);

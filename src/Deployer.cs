@@ -41,8 +41,9 @@ namespace Zongsoft.Utilities
 	public class Deployer
 	{
 		#region 常量定义
-		private const string DEPLOYMENTDIRECTORY_PARAMETER = "deploymentDirectory";
-		private const string IGNORERESOLVEDEPLOYMENTFILE_PARAMETER = "ignoreResolve";
+		private const string DEPLOYMENTDIRECTORY_OPTION  = "deploymentDirectory";
+		private const string IGNOREDEPLOYMENTFILE_OPTION = "ignoreDeploymentFile";
+		private const string EXPANSION_OPTION = "expansion";
 
 		private const string USERPROFILE_ENVIRONMENT = "USERPROFILE";
 		private const string NUGET_PACKAGES_ENVIRONMENT = "NUGET_PACKAGES";
@@ -53,17 +54,17 @@ namespace Zongsoft.Utilities
 
 		#region 成员字段
 		private ITerminal _terminal;
-		private readonly IDictionary<string, string> _environmentVariables;
+		private readonly IDictionary<string, string> _variables;
 		#endregion
 
 		#region 构造函数
 		public Deployer(ITerminal terminal)
 		{
 			_terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
-			_environmentVariables = Zongsoft.Collections.DictionaryExtension.ToDictionary<string, string>(Environment.GetEnvironmentVariables(), StringComparer.OrdinalIgnoreCase);
+			_variables = Zongsoft.Collections.DictionaryExtension.ToDictionary<string, string>(Environment.GetEnvironmentVariables(), StringComparer.OrdinalIgnoreCase);
 
-			if(!_environmentVariables.ContainsKey(NUGET_PACKAGES_ENVIRONMENT) && _environmentVariables.TryGetValue(USERPROFILE_ENVIRONMENT, out var home))
-				_environmentVariables.TryAdd(NUGET_PACKAGES_ENVIRONMENT, Path.Combine(home, ".nuget/packages"));
+			if(!_variables.ContainsKey(NUGET_PACKAGES_ENVIRONMENT) && _variables.TryGetValue(USERPROFILE_ENVIRONMENT, out var home))
+				_variables.TryAdd(NUGET_PACKAGES_ENVIRONMENT, Path.Combine(home, ".nuget/packages"));
 		}
 		#endregion
 
@@ -74,10 +75,7 @@ namespace Zongsoft.Utilities
 			set => _terminal = value ?? throw new ArgumentNullException();
 		}
 
-		public IDictionary<string, string> EnvironmentVariables
-		{
-			get => _environmentVariables;
-		}
+		public IDictionary<string, string> Variables => _variables;
 		#endregion
 
 		#region 公共方法
@@ -87,17 +85,17 @@ namespace Zongsoft.Utilities
 				throw new ArgumentNullException(nameof(deploymentFilePath));
 
 			if(!Path.IsPathRooted(deploymentFilePath))
-				deploymentFilePath = Zongsoft.IO.Path.Combine(Environment.CurrentDirectory, deploymentFilePath);
+				deploymentFilePath = Path.Combine(Environment.CurrentDirectory, deploymentFilePath);
 
 			if(!File.Exists(deploymentFilePath))
 				throw new FileNotFoundException(ResourceUtility.GetResourceString(typeof(Deployer).Assembly, "Text.DeploymentFileNotExists", deploymentFilePath));
 
 			if(string.IsNullOrWhiteSpace(destinationDirectory))
 			{
-				if(_environmentVariables.TryGetValue(DEPLOYMENTDIRECTORY_PARAMETER, out destinationDirectory))
+				if(_variables.TryGetValue(DEPLOYMENTDIRECTORY_OPTION, out destinationDirectory))
 				{
 					if(!Path.IsPathRooted(destinationDirectory))
-						destinationDirectory = Zongsoft.IO.Path.Combine(Environment.CurrentDirectory, destinationDirectory);
+						destinationDirectory = Path.Combine(Environment.CurrentDirectory, destinationDirectory);
 				}
 				else
 				{
@@ -106,7 +104,7 @@ namespace Zongsoft.Utilities
 			}
 
 			if(!Directory.Exists(destinationDirectory))
-				throw new DirectoryNotFoundException(destinationDirectory);
+				Directory.CreateDirectory(destinationDirectory);
 
 			//创建部署上下文对象
 			var context = this.CreateContext(deploymentFilePath, destinationDirectory);
@@ -139,7 +137,7 @@ namespace Zongsoft.Utilities
 					var section = (ProfileSection)item;
 
 					//确保部署的目标目录已经存在，如不存在则创建它
-					Utility.EnsureDirectory(context.DestinationDirectory, Normalize(section.FullName.Replace(' ', '/'), _environmentVariables));
+					Utility.EnsureDirectory(context.DestinationDirectory, Normalize(section.FullName.Replace(' ', '/'), _variables));
 
 					foreach(var child in section.Items)
 						this.DeployItem(child, context);
@@ -153,21 +151,21 @@ namespace Zongsoft.Utilities
 
 		private void DeployEntry(ProfileEntry entry, DeploymentContext context)
 		{
-			var sourcePath = Normalize(entry.Name, _environmentVariables);
+			var sourcePath = Normalize(entry.Name, _variables);
 
 			if(!Path.IsPathRooted(sourcePath))
-				sourcePath = Zongsoft.IO.Path.Combine(context.SourceDirectory, sourcePath);
+				sourcePath = Path.Combine(context.SourceDirectory, sourcePath);
 
-			var destinationName = string.IsNullOrWhiteSpace(entry.Value) ? string.Empty : Normalize(entry.Value, _environmentVariables);
+			var destinationName = string.IsNullOrWhiteSpace(entry.Value) ? string.Empty : Normalize(entry.Value, _variables);
 			var destinationDirectory = context.DestinationDirectory;
 
 			if(entry.Section != null)
-				destinationDirectory = Zongsoft.IO.Path.Combine(context.DestinationDirectory, Normalize(entry.Section.FullName.Replace(' ', '/'), _environmentVariables));
+				destinationDirectory = Path.Combine(context.DestinationDirectory, Normalize(entry.Section.FullName.Replace(' ', Path.DirectorySeparatorChar), _variables));
 
 			//由于源路径中可能含有通配符，因此必须查找匹配的文件集
-			foreach(var sourceFile in GetFiles(sourcePath))
+			foreach(var sourceFile in GetFiles(sourcePath, _variables.ContainsKey(EXPANSION_OPTION)))
 			{
-				if(!File.Exists(sourceFile))
+				if(!sourceFile.Exists())
 				{
 					//累加文件复制失败计数器
 					context.Counter.Fail();
@@ -179,26 +177,25 @@ namespace Zongsoft.Utilities
 				}
 
 				//如果指定要拷贝的源文件是一个部署文件
-				if(IsDeploymentFile(sourceFile))
+				if(IsDeploymentFile(sourceFile.Path))
 				{
 					//如果没有指定忽略处理子部署文件，则进行子部署文件的递归处理
-					if(!_environmentVariables.ContainsKey(IGNORERESOLVEDEPLOYMENTFILE_PARAMETER))
+					if(!_variables.ContainsKey(IGNOREDEPLOYMENTFILE_OPTION))
 					{
-						var counter = this.Deploy(sourceFile, destinationDirectory);
-
-						context.Counter.Fail(counter.Failures);
-						context.Counter.Success(counter.Successes);
-
+						var counter = this.Deploy(sourceFile.Path, GetDestinationDirectory(destinationDirectory, sourceFile.Suffix));
+						context.Count(counter);
 						continue;
 					}
 				}
 
 				//执行文件复制
-				if(CopyFile(sourceFile, Path.Combine(destinationDirectory, string.IsNullOrEmpty(destinationName) ? Path.GetFileName(sourceFile) : destinationName)))
+				if(CopyFile(sourceFile.Path, Path.Combine(GetDestinationDirectory(destinationDirectory, sourceFile.Suffix), string.IsNullOrEmpty(destinationName) ? Path.GetFileName(sourceFile.Path) : destinationName)))
 					context.Counter.Success();
 				else
 					context.Counter.Fail();
 			}
+
+			static string GetDestinationDirectory(string root, string suffix) => string.IsNullOrEmpty(suffix) ? root : Path.Combine(root, suffix);
 		}
 
 		private static string Normalize(string text, IDictionary<string, string> variables)
@@ -215,7 +212,7 @@ namespace Zongsoft.Utilities
 			});
 		}
 
-		public static IEnumerable<string> GetFiles(string filePath)
+		private static IEnumerable<PathToken> GetFiles(string filePath, bool expansion)
 		{
 			if(string.IsNullOrEmpty(filePath))
 				yield break;
@@ -226,59 +223,81 @@ namespace Zongsoft.Utilities
 			if(string.IsNullOrEmpty(fileName))
 				yield break;
 
-			foreach(var directory in GetDirectories(directoryName))
+			foreach(var directory in GetDirectories(directoryName, expansion))
 			{
 				if(fileName.Contains("*") || fileName.Contains("?"))
 				{
-					foreach(var file in Directory.GetFiles(directory, fileName))
-						yield return file;
+					foreach(var file in Directory.GetFiles(directory.Path, fileName))
+						yield return new PathToken(file, directory.Suffix);
 				}
 				else
 				{
-					yield return Path.Combine(directory, fileName);
+					directory.Combine(fileName);
+					yield return directory;
 				}
 			}
 		}
 
-		private static IEnumerable<string> GetDirectories(string directory)
+		private static IEnumerable<PathToken> GetDirectories(string directory, bool expansion)
 		{
+			const int Asterisk1 = 1;
+			const int Asterisk2 = 2;
+
 			if(string.IsNullOrEmpty(directory))
-				return Array.Empty<string>();
+				return Array.Empty<PathToken>();
 
 			directory = Path.GetFullPath(directory);
 			var parts = Common.StringExtension.Slice(directory, new[] { '/', '\\' }).ToArray();
-			List<string> directories = null;
+			List<PathToken> directories = null;
+			var flags = 0;
 
 			for(int i = 0; i < parts.Length; i++)
 			{
 				if(parts[i] == "**")
 				{
 					if(directories == null)
-						directories = new List<string>();
+						directories = new List<PathToken>();
 
-					directories.AddRange(Directory.GetDirectories(Path.Combine(parts.Take(i).ToArray()), "*", SearchOption.AllDirectories));
+					flags |= Asterisk2;
+					var origin = Path.Combine(parts.Take(i).ToArray());
+					directories.AddRange(Directory.GetDirectories(origin, "*", SearchOption.AllDirectories).Select(p => PathToken.Create(p, origin)));
 				}
 				else if(parts[i].Contains("*") || parts.Contains("?"))
 				{
 					if(directories == null)
-						directories = new List<string>();
+						directories = new List<PathToken>();
 
-					directories.AddRange(Directory.GetDirectories(Path.Combine(parts.Take(i).ToArray()), parts[i], SearchOption.TopDirectoryOnly));
+					flags |= Asterisk1;
+					var origin = Path.Combine(parts.Take(i).ToArray());
+					directories.AddRange(Directory.GetDirectories(origin, parts[i], SearchOption.TopDirectoryOnly).Select(p => PathToken.Create(p, origin)));
 				}
-				else
+				else if(directories != null && directories.Count > 0)
 				{
-					if(directories != null && directories.Count > 0)
+					if((flags & Asterisk2) == Asterisk2)
 					{
 						for(int j = 0; j < directories.Count; j++)
-							directories[j] = Path.Combine(directories[j], parts[i]);
+						{
+							if(!directories[j].Suffix.EndsWith("/" + parts[i]))
+								directories[j].Deprecate();
+						}
+					}
+					else
+					{
+						for(int j = 0; j < directories.Count; j++)
+						{
+							directories[j].Combine(parts[i]);
+
+							if(expansion)
+								directories[j].AppendSuffix(parts[i]);
+						}
 					}
 				}
 			}
 
 			if(directories == null || directories.Count == 0)
-				return new[] { directory };
+				return new[] { new PathToken(directory) };
 
-			return directories;
+			return directories.Where(token => !string.IsNullOrEmpty(token.Path));
 		}
 
 		private static bool CopyFile(string source, string destination)
@@ -292,7 +311,13 @@ namespace Zongsoft.Utilities
 				requiredCope = File.GetLastWriteTime(source) > File.GetLastWriteTime(destination);
 
 			if(requiredCope)
+			{
+				var directory = Path.GetDirectoryName(destination);
+				if(!Directory.Exists(directory))
+					Directory.CreateDirectory(directory);
+
 				File.Copy(source, destination, true);
+			}
 
 			return requiredCope;
 		}
@@ -307,16 +332,42 @@ namespace Zongsoft.Utilities
 		}
 		#endregion
 
-		private readonly struct DirectoryToken
+		#region 嵌套子类
+		private class PathToken
 		{
-			public DirectoryToken(string path, params string[] wildcards)
+			public PathToken(string path, string suffix = null)
 			{
 				this.Path = path;
-				this.Wildcards = wildcards;
+				this.Suffix = string.IsNullOrEmpty(suffix) ? null : suffix.Trim('/', '\\');
 			}
 
-			public readonly string Path;
-			public readonly string[] Wildcards;
+			public string Path;
+			public string Suffix;
+
+			public bool Exists() => !string.IsNullOrEmpty(this.Path) && File.Exists(this.Path);
+			public void Deprecate() => this.Path = null;
+			public void Combine(string path) => this.Path = System.IO.Path.Combine(this.Path, path);
+			public void AppendSuffix(string value)
+			{
+				if(string.IsNullOrEmpty(value) || value == "/" || value == "\\")
+					return;
+
+				if(string.IsNullOrEmpty(this.Suffix))
+					this.Suffix = value;
+				else
+					this.Suffix = $"{this.Suffix}/{value}";
+			}
+
+			public static PathToken Create(string fullPath, string prefix)
+			{
+				if(prefix != null && prefix.Length > 0 && fullPath.StartsWith(prefix))
+					return new PathToken(fullPath, fullPath.Substring(prefix.Length));
+
+				return new PathToken(fullPath);
+			}
+
+			public override string ToString() => string.IsNullOrEmpty(this.Suffix) ? this.Path : $"{this.Path}?{this.Suffix}";
 		}
+		#endregion
 	}
 }

@@ -48,8 +48,16 @@ namespace Zongsoft.Utilities
 		public Deployer Deployer { get; init; }
 		public DeploymentCounter Counter { get; init; }
 		public string DestinationDirectory { get; init; }
-		public Zongsoft.Configuration.Profiles.Profile DeploymentProfile { get; init; }
+		public Configuration.Profiles.Profile DeploymentProfile { get; init; }
 		public string SourceDirectory => Path.GetDirectoryName(this.DeploymentProfile.FilePath);
+		#endregion
+
+		#region 公共方法
+		public void Count(DeploymentCounter counter)
+		{
+			this.Counter.Fail(counter.Failures);
+			this.Counter.Success(counter.Successes);
+		}
 		#endregion
 	}
 }
