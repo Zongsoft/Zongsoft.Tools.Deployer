@@ -36,7 +36,7 @@ using Zongsoft.Terminals;
 using Zongsoft.Configuration;
 using Zongsoft.Configuration.Profiles;
 
-namespace Zongsoft.Utilities
+namespace Zongsoft.Tools.Deployer
 {
 	public class Deployer
 	{
@@ -88,7 +88,11 @@ namespace Zongsoft.Utilities
 				deploymentFilePath = Path.Combine(Environment.CurrentDirectory, deploymentFilePath);
 
 			if(!File.Exists(deploymentFilePath))
-				throw new FileNotFoundException(ResourceUtility.GetResourceString(typeof(Deployer).Assembly, "Text.DeploymentFileNotExists", deploymentFilePath));
+			{
+				_terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Text_Warn);
+				_terminal.WriteLine(CommandOutletColor.DarkYellow, string.Format(Properties.Resources.Text_DeploymentFileNotExists, deploymentFilePath));
+				return new DeploymentCounter(1, 0);
+			}
 
 			if(string.IsNullOrWhiteSpace(destinationDirectory))
 			{
@@ -170,8 +174,8 @@ namespace Zongsoft.Utilities
 					//累加文件复制失败计数器
 					context.Counter.Fail();
 
-					_terminal.Write(CommandOutletColor.Magenta, ResourceUtility.GetResourceString(typeof(Deployer).Assembly, "Text.Warn"));
-					_terminal.WriteLine(CommandOutletColor.DarkYellow, string.Format(ResourceUtility.GetResourceString(typeof(Deployer).Assembly, "Text.FileNotExists"), sourceFile));
+					_terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Text_Warn);
+					_terminal.WriteLine(CommandOutletColor.DarkYellow, string.Format(Properties.Resources.Text_FileNotExists, sourceFile));
 
 					continue;
 				}

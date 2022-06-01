@@ -26,7 +26,7 @@
 
 using System;
 
-namespace Zongsoft.Utilities
+namespace Zongsoft.Tools.Deployer
 {
 	public class DeploymentCounter
 	{

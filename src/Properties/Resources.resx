@@ -121,7 +121,7 @@
     <value>部署“{0}”文件，总计执行了{1}次文件复制（成功{2}次；失败{3}次）。</value>
   </data>
   <data name="Text.DeploymentFileNotExists" xml:space="preserve">
-    <value>指定的“{0}”部署配置文件是不存在的。</value>
+    <value>指定的“{0}”部署文件是不存在的。</value>
   </data>
   <data name="Text.DirectoryNotExists" xml:space="preserve">
     <value>指定的“{0}”目录是不存在的。</value>
@@ -133,7 +133,7 @@
     <value>输入的“{0}”是无效的参数格式。</value>
   </data>
   <data name="Text.MissingArguments" xml:space="preserve">
-    <value>未指定发布文件。</value>
+    <value>未指定部署文件参数且当前目录下没有默认(.deploy)部署文件。</value>
   </data>
   <data name="Text.Warn" xml:space="preserve">
     <value>警告：</value>

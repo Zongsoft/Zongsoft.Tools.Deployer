@@ -27,7 +27,7 @@
 using System;
 using System.IO;
 
-namespace Zongsoft.Utilities
+namespace Zongsoft.Tools.Deployer
 {
 	public class DeploymentContext
 	{

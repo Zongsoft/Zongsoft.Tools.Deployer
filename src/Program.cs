@@ -28,49 +28,29 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 
+using Zongsoft.Common;
 using Zongsoft.Services;
 using Zongsoft.Resources;
 
-namespace Zongsoft.Utilities
+namespace Zongsoft.Tools.Deployer
 {
 	internal class Program
 	{
+		const string DEFAULT_DEPLOYMENT_FILENAME = ".deploy";
+
 		public static void Main(string[] args)
 		{
-			if(args == null || args.Length < 1)
-			{
-				//判断当前目录下是否存在默认部署文件，如果不存在则打印错误信息并退出
-				if(!File.Exists(Path.Combine(Environment.CurrentDirectory, ".deploy")))
-				{
-					Console.ForegroundColor = ConsoleColor.DarkRed;
-					Console.WriteLine(ResourceUtility.GetResourceString(typeof(Program).Assembly, "Text.MissingArguments"));
-					Console.ResetColor();
-
-					return;
-				}
-
-				//设置默认部署文件
-				args = new[] { ".deploy" };
-			}
-
 			try
 			{
 				//使用当前命令行参数构造一个命令表达式
-				var expression = CommandExpression.Parse("deployer " + string.Join(" ", args));
+				var expression = CommandExpression.Parse("deployer " + string.Join(" ", args ?? Array.Empty<string>()));
+
+				//如果没有指定命令行参数并且当前目录下也没有默认部署文件则退出
+				if(expression.Arguments.Length == 0 && !HasDefaultDeploymentFile())
+					return;
 
 				//创建一个部署文件路径的列表
-				var paths = new List<string>(expression.Arguments.Length);
-
-				//校验所有指定的文件路径是否都存在，并将处理后的路径加入到待处理的列表中
-				foreach(var argument in expression.Arguments)
-				{
-					var path = Path.IsPathRooted(argument) ? argument : Path.Combine(Environment.CurrentDirectory, argument);
-
-					if(File.Exists(path))
-						paths.Add(path);
-					else
-						throw new FileNotFoundException(path);
-				}
+				var paths = expression.Arguments.Length > 0 ? expression.Arguments : new[] { DEFAULT_DEPLOYMENT_FILENAME };
 
 				//创建部署器类的实例
 				var deployer = new Deployer(Zongsoft.Terminals.ConsoleTerminal.Instance);
@@ -91,7 +71,7 @@ namespace Zongsoft.Utilities
 					var counter = deployer.Deploy(path);
 
 					//打印部署的结果信息
-					deployer.Terminal.WriteLine(CommandOutletColor.DarkGreen, string.Format(ResourceUtility.GetResourceString(typeof(Program).Assembly, "Text.Deploy.CompleteInfo"), path, counter.Total, counter.Successes, counter.Failures));
+					deployer.Terminal.WriteLine(CommandOutletColor.DarkGreen, string.Format(Properties.Resources.Text_Deploy_CompleteInfo, path, counter.Total, counter.Successes, counter.Failures));
 				}
 			}
 			catch(Exception ex)
@@ -106,6 +86,19 @@ namespace Zongsoft.Utilities
 				//重置控制台的前景色
 				Console.ForegroundColor = foregroundColor;
 			}
+		}
+
+		private static bool HasDefaultDeploymentFile()
+		{
+			//判断当前目录下是否存在默认部署文件，如果不存在则打印错误信息并退出
+			if(File.Exists(Path.Combine(Environment.CurrentDirectory, DEFAULT_DEPLOYMENT_FILENAME)))
+				return true;
+
+			Console.ForegroundColor = ConsoleColor.DarkRed;
+			Console.WriteLine(Properties.Resources.Text_MissingArguments);
+			Console.ResetColor();
+
+			return false;
 		}
 	}
 }
