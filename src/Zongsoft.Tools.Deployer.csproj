@@ -2,7 +2,7 @@
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
 		<TargetFrameworks>net5.0</TargetFrameworks>
-		<Version>5.8.2.0</Version>
+		<Version>5.9.0.0</Version>
 		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
 		<PackAsTool>true</PackAsTool>
 		<ToolCommandName>dotnet-deploy</ToolCommandName>
@@ -16,6 +16,7 @@
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<PackageProjectUrl>https://github.com/Zongsoft/Zongsoft.Tools.Deployer</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/Zongsoft.Tools.Deployer</RepositoryUrl>
+		<PackageIconUrl>https://github.com/Zongsoft/Guidelines/raw/master/zongsoft-logo(48x48).png</PackageIconUrl>
 	</PropertyGroup>
 
 	<ItemGroup>

@@ -89,8 +89,8 @@ namespace Zongsoft.Tools.Deployer
 
 			if(!File.Exists(deploymentFilePath))
 			{
-				_terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Text_Warn);
-				_terminal.WriteLine(CommandOutletColor.DarkYellow, string.Format(Properties.Resources.Text_DeploymentFileNotExists, deploymentFilePath));
+				//打印部署文件不存在的消息
+				_terminal.FileNotExists(CommandOutletColor.DarkMagenta, string.Format(Properties.Resources.Text_DeploymentFileNotExists, deploymentFilePath));
 				return new DeploymentCounter(1, 0);
 			}
 
@@ -174,8 +174,8 @@ namespace Zongsoft.Tools.Deployer
 					//累加文件复制失败计数器
 					context.Counter.Fail();
 
-					_terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Text_Warn);
-					_terminal.WriteLine(CommandOutletColor.DarkYellow, string.Format(Properties.Resources.Text_FileNotExists, sourceFile));
+					//打印文件不存在的消息
+					_terminal.FileNotExists(sourceFile.Path);
 
 					continue;
 				}
@@ -231,6 +231,10 @@ namespace Zongsoft.Tools.Deployer
 			{
 				if(fileName.Contains("*") || fileName.Contains("?"))
 				{
+					//如果指定目录不存在则跳过，否则后面的代码会引发系统IO异常
+					if(!Directory.Exists(directory.Path))
+						continue;
+
 					foreach(var file in Directory.GetFiles(directory.Path, fileName))
 						yield return new PathToken(file, directory.Suffix);
 				}
@@ -264,6 +268,11 @@ namespace Zongsoft.Tools.Deployer
 
 					flags |= Asterisk2;
 					var origin = Path.Combine(parts.Take(i).ToArray());
+
+					//如果指定目录不存在则跳过，否则后面的代码会引发系统IO异常
+					if(!Directory.Exists(origin))
+						continue;
+
 					directories.AddRange(Directory.GetDirectories(origin, "*", SearchOption.AllDirectories).Select(p => PathToken.Create(p, origin)));
 				}
 				else if(parts[i].Contains("*") || parts.Contains("?"))
@@ -273,6 +282,11 @@ namespace Zongsoft.Tools.Deployer
 
 					flags |= Asterisk1;
 					var origin = Path.Combine(parts.Take(i).ToArray());
+
+					//如果指定目录不存在则跳过，否则后面的代码会引发系统IO异常
+					if(!Directory.Exists(origin))
+						continue;
+
 					directories.AddRange(Directory.GetDirectories(origin, parts[i], SearchOption.TopDirectoryOnly).Select(p => PathToken.Create(p, origin)));
 				}
 				else if(directories != null && directories.Count > 0)

@@ -27,6 +27,9 @@
 using System;
 using System.IO;
 
+using Zongsoft.Services;
+using Zongsoft.Terminals;
+
 namespace Zongsoft.Tools.Deployer
 {
 	internal static class Utility
@@ -45,6 +48,18 @@ namespace Zongsoft.Tools.Deployer
 				Directory.CreateDirectory(fullPath);
 
 			return fullPath;
+		}
+
+		public static void FileNotExists(this ITerminal terminal, string filePath)
+		{
+			terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Text_Warn);
+			terminal.WriteLine(CommandOutletColor.DarkYellow, string.Format(Properties.Resources.Text_FileNotExists, filePath));
+		}
+
+		public static void FileNotExists(this ITerminal terminal, CommandOutletColor color, string message)
+		{
+			terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Text_Warn);
+			terminal.WriteLine(color, message);
 		}
 	}
 }

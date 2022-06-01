@@ -71,7 +71,7 @@ namespace Zongsoft.Tools.Deployer
 					var counter = deployer.Deploy(path);
 
 					//打印部署的结果信息
-					deployer.Terminal.WriteLine(CommandOutletColor.DarkGreen, string.Format(Properties.Resources.Text_Deploy_CompleteInfo, path, counter.Total, counter.Successes, counter.Failures));
+					deployer.Terminal.WriteLine(CommandOutletColor.DarkGreen, string.Format(Properties.Resources.Text_Deploy_CompleteInfo, Path.GetFullPath(path), counter.Total, counter.Successes, counter.Failures));
 				}
 			}
 			catch(Exception ex)
