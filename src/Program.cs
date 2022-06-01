@@ -39,11 +39,18 @@ namespace Zongsoft.Utilities
 		{
 			if(args == null || args.Length < 1)
 			{
-				Console.ForegroundColor = ConsoleColor.DarkRed;
-				Console.WriteLine(ResourceUtility.GetResourceString(typeof(Program).Assembly, "Text.MissingArguments"));
-				Console.ResetColor();
+				//判断当前目录下是否存在默认部署文件，如果不存在则打印错误信息并退出
+				if(!File.Exists(Path.Combine(Environment.CurrentDirectory, ".deploy")))
+				{
+					Console.ForegroundColor = ConsoleColor.DarkRed;
+					Console.WriteLine(ResourceUtility.GetResourceString(typeof(Program).Assembly, "Text.MissingArguments"));
+					Console.ResetColor();
 
-				return;
+					return;
+				}
+
+				//设置默认部署文件
+				args = new[] { ".deploy" };
 			}
 
 			try
