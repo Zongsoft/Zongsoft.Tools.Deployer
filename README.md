@@ -1,170 +1,78 @@
-﻿# Zongsoft.Utilities.Deployer
+﻿# The Zongsoft Deployment Tool
 
-	这是一个应用部署工具，通过指定的部署配置文件来驱动工具复制文件到特定目录结构中。
+![license](https://img.shields.io/github/license/Zongsoft/Zongsoft.Tools.Deployer) ![download](https://img.shields.io/nuget/dt/Zongsoft.Tools.Deployer) ![version](https://img.shields.io/github/v/release/Zongsoft/Zongsoft.Tools.Deployer?include_prereleases) ![github stars](https://img.shields.io/github/stars/Zongsoft/Zongsoft.Tools.Deployer?style=social)
 
-## 使用方法
+README: [English](https://github.com/Zongsoft/Zongsoft.Tools.Deployer/blob/master/README.md) | [简体中文](https://github.com/Zongsoft/Zongsoft.Tools.Deployer/blob/master/README-zh_CN.md)
 
-譬如在 `Automao.Web.Launcher` 这个Web宿主程序根目录下有一个名为 `deploy.ini` 的部署文件，其内容如下所示：
+-----
 
-``` ini
-[plugins]
-/Zongsoft/Zongsoft.Plugins/Main.plugin
-/Zongsoft/Zongsoft.Web.Plugins/Web.plugin
+## Abstraction
 
-[plugins views]
-/Zongsoft/Zongsoft.Web.Plugins/src/Mvc/Views/*
+This is an application deployment tool that instructs the deployment tool to copy specific files to the destination location by specifying the deployment file.
 
-[plugins Zongsoft.Externals Json]
-/Zongsoft/Zongsoft.Externals.Json/src/Zongsoft.Externals.Json.plugin
-/Zongsoft/Zongsoft.Externals.Json/src/Zongsoft.Externals.Json.option
-/Zongsoft/Zongsoft.Externals.Json/src/bin/$(Edition)/Zongsoft.Externals.Json.*
-/Zongsoft/Zongsoft.Externals.Json/src/bin/$(Edition)/Newtonsoft.*
+It is recommended to define a default deployment file named `.deploy` in the deployment project directory, and the deployment file is a plain text file in `.ini` format.
 
-[plugins Zongsoft.Externals Redis]
-/Zongsoft/Zongsoft.Externals.Redis/src/Zongsoft.Externals.Redis.plugin
-/Zongsoft/Zongsoft.Externals.Redis/src/Zongsoft.Externals.Redis.option
-/Zongsoft/Zongsoft.Externals.Redis/src/bin/$(Edition)/Zongsoft.Externals.Redis.*
-/Zongsoft/Zongsoft.Externals.Redis/src/bin/$(Edition)/ServiceStack.*
+### Reference examples
 
-[plugins Automao.Data]
-/Automao/Automao.Data/src/Automao.Data.plugin
-/Automao/Automao.Data/src/Automao.Data.option
-/Automao/Automao.Data/src/bin/$(Edition)/Automao.Data.*
+- Deployment source projects
+	- `/Zongsoft/Framework/Zongsoft.Data/.deploy`
+	- `/Zongsoft/Framework/Zongsoft.Data/drivers/mssql/.deploy`
+	- `/Zongsoft/Framework/Zongsoft.Data/drivers/mysql/.deploy`
+	- `/Zongsoft/Framework/Zongsoft.Security/.deploy`
+	- `/Zongsoft/Framework/Zongsoft.Security/api/.deploy`
+	- `/Zongsoft/Framework/Zongsoft.Messaging.Mqtt/.deploy`
+	- `/Zongsoft/Framework/Zongsoft.Messaging.Kafka/.deploy`
 
-[plugins Automao.Web]
-../Automao.Web/src/Automao.Web.plugin
-../Automao.Web/src/Automao.Web.option
-../Automao.Web/src/bin/Automao.Web.*
+- Deployment destination projects *(hosting projects)*
+	- `/Zongsoft/Framework/hosting/terminal/.deploy`
+	- `/Zongsoft/Framework/hosting/web/.deploy`
 
-[plugins Automao.Web views]
-../Automao.Web/src/views/*
 
-[plugins Automao.Common]
-../Automao.Common/src/Automao.Common.plugin
-../Automao.Common/src/Automao.Common.option
-../Automao.Common/src/automao.mapping
-../Automao.Common/src/bin/$(Edition)/Automao.Common.*
+## format specification
 
-../Automao.Common.Web/src/Automao.Common.Web.plugin
-../Automao.Common.Web/src/Automao.Common.Web.option
-../Automao.Common.Web/src/bin/Automao.Common.Web.*
+The deployment file is a plain text file in `.ini` format, and its content consists of **Paragraph**(`Section`) and **Entry**(`Entry`) enclosed in square brackets. The **paragraph** part represents the destination directory of deployment, and the **Entry** part represents the source file path to be deployed. The source file path supports three wildcard matching: `*`, `?` and `**`.
 
-[plugins Automao.Common views]
-../Automao.Common.Web/src/views/*
+**Paragraph** and **Entry** values both support variable references in the format of dollar sign followed by parentheses `$(...)` or double percent signs `%...%`, the referenced variable is the deployment Option parameters passed in by the command line or environment variables. For the specific effect, please refer to the content of the above deployment file.
 
-[plugins Automao.Cashing]
-../Automao.Cashing/src/Automao.Cashing.plugin
-../Automao.Cashing/src/Automao.Cashing.option
-../Automao.Cashing/src/bin/$(Edition)/Automao.Cashing.*
 
-../Automao.Cashing.Web/src/Automao.Cashing.Web.plugin
-../Automao.Cashing.Web/src/Automao.Cashing.Web.option
-../Automao.Cashing.Web/src/bin/Automao.Cashing.Web.*
+## The tool setup
 
-[plugins Automao.Cashing views]
-../Automao.Cashing.Web/src/views/*
-
-[plugins Automao.Customers]
-../Automao.Customers/src/Automao.Customers.plugin
-../Automao.Customers/src/Automao.Customers.option
-../Automao.Customers/src/bin/$(Edition)/Automao.Customers.*
-
-../Automao.Customers.Web/src/Automao.Customers.Web.plugin
-../Automao.Customers.Web/src/Automao.Customers.Web.option
-../Automao.Customers.Web/src/bin/Automao.Customers.Web.*
-
-[plugins Automao.Customers views]
-../Automao.Customers.Web/src/views/*
-
-[plugins Automao.Maintenances]
-../Automao.Maintenances/src/Automao.Maintenances.plugin
-../Automao.Maintenances/src/Automao.Maintenances.option
-../Automao.Maintenances/src/bin/$(Edition)/Automao.Maintenances.*
-
-../Automao.Maintenances.Web/src/Automao.Maintenances.Web.plugin
-../Automao.Maintenances.Web/src/Automao.Maintenances.Web.option
-../Automao.Maintenances.Web/src/bin/Automao.Maintenances.Web.*
-
-[plugins Automao.Maintenances views]
-../Automao.Maintenances.Web/src/views/*
-
-[plugins Automao.Marketing]
-../Automao.Marketing/src/Automao.Marketing.plugin
-../Automao.Marketing/src/Automao.Marketing.option
-../Automao.Marketing/src/bin/$(Edition)/Automao.Marketing.*
-
-../Automao.Marketing.Web/src/Automao.Marketing.Web.plugin
-../Automao.Marketing.Web/src/Automao.Marketing.Web.option
-../Automao.Marketing.Web/src/bin/Automao.Marketing.Web.*
-
-[plugins Automao.Marketing views]
-../Automao.Marketing.Web/src/views/*
-
-[plugins Automao.Rescues]
-../Automao.Rescues/src/Automao.Rescues.plugin
-../Automao.Rescues/src/Automao.Rescues.option
-../Automao.Rescues/src/bin/$(Edition)/Automao.Rescues.*
-
-../Automao.Rescues.Web/src/Automao.Rescues.Web.plugin
-../Automao.Rescues.Web/src/Automao.Rescues.Web.option
-../Automao.Rescues.Web/src/bin/Automao.Rescues.Web.*
-
-[plugins Automao.Rescues views]
-../Automao.Rescues.Web/src/views/*
-
-[plugins Automao.Externals Alipay]
-../Automao.Externals.Alipay/src/Automao.Externals.Alipay.plugin
-../Automao.Externals.Alipay/src/Automao.Externals.Alipay.option
-../Automao.Externals.Alipay/src/bin/$(Edition)/Automao.Externals.Alipay.*
-
-../Automao.Externals.Alipay.Web/src/Automao.Externals.Alipay.Web.plugin
-../Automao.Externals.Alipay.Web/src/Automao.Externals.Alipay.Web.option
-../Automao.Externals.Alipay.Web/src/bin/Automao.Externals.Alipay.Web.*
-
-[plugins Automao.Externals Alipay views]
-../Automao.Externals.Alipay.Web/src/views/*
-
-[plugins Automao.Externals WeChat]
-../Automao.Externals.WeChat/src/Automao.Externals.WeChat.plugin
-../Automao.Externals.WeChat/src/Automao.Externals.WeChat.option
-../Automao.Externals.WeChat/src/bin/$(Edition)/Automao.Externals.WeChat.*
-
-../Automao.Externals.WeChat.Web/src/Automao.Externals.WeChat.Web.plugin
-../Automao.Externals.WeChat.Web/src/Automao.Externals.WeChat.Web.option
-../Automao.Externals.WeChat.Web/src/bin/Automao.Externals.WeChat.Web.*
-
-[plugins Automao.Externals WeChat views]
-../Automao.Externals.WeChat.Web/src/views/*
-
+- List tools
+```bash
+dotnet tool list
+dotnet tool list -g
 ```
 
-同时，在该部署文件的同一目录中，分别有 `deploy-debug.bat` 和 `deploy-release.bat` 这两个脚本文件，其内容分别如下：
-
-``` DOS
-\Zongsoft\Zongsoft.Utilities.Deployer\src\bin\Debug\Zongsoft.Utilities.Deployer.exe -edition:Debug "deploy.ini"
+- Install tool
+```bash
+dotnet tool install zongsoft.tools.deployer -g
 ```
 
-``` DOS
-\Zongsoft\Zongsoft.Utilities.Deployer\src\bin\Debug\Zongsoft.Utilities.Deployer.exe -edition:Release "deploy.ini"
+- Upgrade tool
+```bash
+dotnet tool update zongsoft.tools.deployer -g
 ```
 
--------
-
-以下是一个终端应用程序的部署文件的大致内容，仅供参考：
+- Uninstall tool
+```bash
+dotnet tool uninstall zongsoft.tools.deployer -g
 ```
-[bin $(Edition) plugins]
-/Zongsoft/Zongsoft.Plugins/Main.plugin
-/Zongsoft/Zongsoft.Terminals.Plugins/Terminals.plugin
 
-[bin $(Edition) plugins Zongsoft.Externals Json]
-/Zongsoft/Zongsoft.Externals.Json/src/Zongsoft.Externals.Json.plugin
-/Zongsoft/Zongsoft.Externals.Json/src/Zongsoft.Externals.Json.option
-/Zongsoft/Zongsoft.Externals.Json/src/bin/$(Edition)/Zongsoft.Externals.Json.*
-/Zongsoft/Zongsoft.Externals.Json/src/bin/$(Edition)/Newtonsoft.*
 
-[bin $(Edition) plugins Zongsoft.Externals Redis]
-/Zongsoft/Zongsoft.Externals.Redis/src/Zongsoft.Externals.Redis.plugin
-/Zongsoft/Zongsoft.Externals.Redis/src/Zongsoft.Externals.Redis.option
-/Zongsoft/Zongsoft.Externals.Redis/src/bin/$(Edition)/Zongsoft.Externals.Redis.*
-/Zongsoft/Zongsoft.Externals.Redis/src/bin/$(Edition)/ServiceStack.*
+## Deploy
+
+- Execute the default deployment in the host(target) directory:
+```bash
+dotnet deploy -edition:Debug -target:net5.0
 ```
+
+- If the host(target) directory does not have a default deployment file (`.deploy`), you must manually specify the deployment file name (multiple deployment files are supported):
+```bash
+dotnet deploy -edition:Debug -target:net5.0 MyProject1.deploy MyProject2.deploy MyProject3.deploy
+```
+
+- For the convenience of deployment, you can create a corresponding edition of the deployment script files in the host(target) project, for example:
+	- deploy-debug.cmd
+		> `dotnet deploy -edition:Debug -target:net5.0`
+	- deploy-release.cmd
+		> `dotnet deploy -edition:Release -target:net5.0`
