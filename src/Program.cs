@@ -77,14 +77,15 @@ namespace Zongsoft.Tools.Deployer
 			catch(Exception ex)
 			{
 				//设置控制台前景色为“红色”
-				var foregroundColor = Console.ForegroundColor;
 				Console.ForegroundColor = ConsoleColor.Red;
 
 				//打印异常消息
-				Console.Error.WriteLine(ex.Message);
+				Console.Error.WriteLine(ex.Message + Environment.NewLine + Environment.NewLine + ex.StackTrace);
 
 				//重置控制台的前景色
-				Console.ForegroundColor = foregroundColor;
+				Console.ResetColor();
+
+				throw;
 			}
 		}
 

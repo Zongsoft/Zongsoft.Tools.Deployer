@@ -44,6 +44,7 @@ namespace Zongsoft.Tools.Deployer
 		private const string DEPLOYMENTDIRECTORY_OPTION  = "deploymentDirectory";
 		private const string IGNOREDEPLOYMENTFILE_OPTION = "ignoreDeploymentFile";
 		private const string EXPANSION_OPTION = "expansion";
+		private const string OVERWRITE_OPTION = "overwrite";
 
 		private const string USERPROFILE_ENVIRONMENT = "USERPROFILE";
 		private const string NUGET_PACKAGES_ENVIRONMENT = "NUGET_PACKAGES";
@@ -192,8 +193,11 @@ namespace Zongsoft.Tools.Deployer
 					}
 				}
 
+				//获取覆盖选项
+				_variables.TryGetValue(OVERWRITE_OPTION, out var overwrite);
+
 				//执行文件复制
-				if(CopyFile(sourceFile.Path, Path.Combine(GetDestinationDirectory(destinationDirectory, sourceFile.Suffix), string.IsNullOrEmpty(destinationName) ? Path.GetFileName(sourceFile.Path) : destinationName)))
+				if(CopyFile(sourceFile.Path, Path.Combine(GetDestinationDirectory(destinationDirectory, sourceFile.Suffix), string.IsNullOrEmpty(destinationName) ? Path.GetFileName(sourceFile.Path) : destinationName), overwrite))
 					context.Counter.Success();
 				else
 					context.Counter.Fail();
@@ -318,14 +322,14 @@ namespace Zongsoft.Tools.Deployer
 			return directories.Where(token => !string.IsNullOrEmpty(token.Path));
 		}
 
-		private static bool CopyFile(string source, string destination)
+		private static bool CopyFile(string source, string destination, string overwrite)
 		{
 			if(string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(destination))
 				return false;
 
-			bool requiredCope = true;
+			var requiredCope = true;
 
-			if(File.Exists(destination))
+			if(File.Exists(destination) && string.Equals(overwrite, "latest", StringComparison.OrdinalIgnoreCase))
 				requiredCope = File.GetLastWriteTime(source) > File.GetLastWriteTime(destination);
 
 			if(requiredCope)
