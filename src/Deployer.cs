@@ -45,6 +45,7 @@ namespace Zongsoft.Tools.Deployer
 		private const string IGNOREDEPLOYMENTFILE_OPTION = "ignoreDeploymentFile";
 		private const string EXPANSION_OPTION = "expansion";
 		private const string OVERWRITE_OPTION = "overwrite";
+		private const string VERBOSITY_OPTION = "verbosity";
 
 		private const string USERPROFILE_ENVIRONMENT = "USERPROFILE";
 		private const string NUGET_PACKAGES_ENVIRONMENT = "NUGET_PACKAGES";
@@ -63,6 +64,9 @@ namespace Zongsoft.Tools.Deployer
 		{
 			_terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
 			_variables = Zongsoft.Collections.DictionaryExtension.ToDictionary<string, string>(Environment.GetEnvironmentVariables(), StringComparer.OrdinalIgnoreCase);
+
+			if(!_variables.ContainsKey(USERPROFILE_ENVIRONMENT))
+				_variables[USERPROFILE_ENVIRONMENT] = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
 			if(!_variables.ContainsKey(NUGET_PACKAGES_ENVIRONMENT) && _variables.TryGetValue(USERPROFILE_ENVIRONMENT, out var home))
 				_variables.TryAdd(NUGET_PACKAGES_ENVIRONMENT, Path.Combine(home, ".nuget/packages"));
@@ -90,8 +94,10 @@ namespace Zongsoft.Tools.Deployer
 
 			if(!File.Exists(deploymentFilePath))
 			{
-				//打印部署文件不存在的消息
-				_terminal.FileNotExists(CommandOutletColor.DarkMagenta, string.Format(Properties.Resources.Text_DeploymentFileNotExists, deploymentFilePath));
+				//打印部署文件不存在的消息（如果是静默模式则不打印提示消息）
+				if(!_variables.TryGetValue(VERBOSITY_OPTION, out var verbosity) || !string.Equals(verbosity, "quiet", StringComparison.OrdinalIgnoreCase))
+					_terminal.FileNotExists(CommandOutletColor.DarkMagenta, string.Format(Properties.Resources.Text_DeploymentFileNotExists, deploymentFilePath));
+
 				return new DeploymentCounter(1, 0);
 			}
 
@@ -175,8 +181,9 @@ namespace Zongsoft.Tools.Deployer
 					//累加文件复制失败计数器
 					context.Counter.Fail();
 
-					//打印文件不存在的消息
-					_terminal.FileNotExists(sourceFile.Path);
+					//打印文件不存在的消息（如果是静默模式则不打印提示消息）
+					if(!_variables.TryGetValue(VERBOSITY_OPTION, out var verbosity) || !string.Equals(verbosity, "quiet", StringComparison.OrdinalIgnoreCase))
+						_terminal.FileNotExists(sourceFile.Path);
 
 					continue;
 				}
