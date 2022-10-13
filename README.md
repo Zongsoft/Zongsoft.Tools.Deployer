@@ -15,17 +15,17 @@ It is recommended to define a default deployment file named `.deploy` in the dep
 ### Reference examples
 
 - Deployment source projects
-	- `/Zongsoft/Framework/Zongsoft.Data/.deploy`
-	- `/Zongsoft/Framework/Zongsoft.Data/drivers/mssql/.deploy`
-	- `/Zongsoft/Framework/Zongsoft.Data/drivers/mysql/.deploy`
-	- `/Zongsoft/Framework/Zongsoft.Security/.deploy`
-	- `/Zongsoft/Framework/Zongsoft.Security/api/.deploy`
-	- `/Zongsoft/Framework/Zongsoft.Messaging.Mqtt/.deploy`
-	- `/Zongsoft/Framework/Zongsoft.Messaging.Kafka/.deploy`
+	- [`/Zongsoft/Framework/Zongsoft.Data/.deploy`](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Data/.deploy)
+	- [`/Zongsoft/Framework/Zongsoft.Data/drivers/mssql/.deploy`](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Data/drivers/mssql/.deploy)
+	- [`/Zongsoft/Framework/Zongsoft.Data/drivers/mysql/.deploy`](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Data/drivers/mysql/.deploy)
+	- [`/Zongsoft/Framework/Zongsoft.Security/.deploy`](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Security/.deploy)
+	- [`/Zongsoft/Framework/Zongsoft.Security/api/.deploy`](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Security/api/.deploy)
+	- [`/Zongsoft/Framework/Zongsoft.Messaging.Mqtt/.deploy`](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Messaging.Mqtt/.deploy)
+	- [`/Zongsoft/Framework/Zongsoft.Messaging.Kafka/.deploy`](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Messaging.Kafka/.deploy)
 
 - Deployment destination projects *(hosting projects)*
-	- `/Zongsoft/Framework/hosting/terminal/.deploy`
-	- `/Zongsoft/Framework/hosting/web/.deploy`
+	- [`/Zongsoft/Framework/hosting/terminal/.deploy`](https://github.com/Zongsoft/Framework/tree/master/hosting/terminal/.deploy)
+	- [`/Zongsoft/Framework/hosting/web/.deploy`](https://github.com/Zongsoft/Framework/tree/master/hosting/web/.deploy)
 
 
 ## format specification
