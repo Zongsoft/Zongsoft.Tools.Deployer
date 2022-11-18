@@ -92,6 +92,9 @@ namespace Zongsoft.Tools.Deployer
 			if(!Path.IsPathRooted(deploymentFilePath))
 				deploymentFilePath = Path.Combine(Environment.CurrentDirectory, deploymentFilePath);
 
+			//对部属文件路径进行参数规整
+			deploymentFilePath = Normalize(deploymentFilePath, _variables);
+
 			if(!File.Exists(deploymentFilePath))
 			{
 				//打印部署文件不存在的消息（如果是静默模式则不打印提示消息）
@@ -113,6 +116,9 @@ namespace Zongsoft.Tools.Deployer
 					destinationDirectory = Environment.CurrentDirectory;
 				}
 			}
+
+			//对目标目录路径进行参数规整
+			destinationDirectory = Normalize(destinationDirectory, _variables);
 
 			if(!Directory.Exists(destinationDirectory))
 				Directory.CreateDirectory(destinationDirectory);
