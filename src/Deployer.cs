@@ -97,11 +97,17 @@ namespace Zongsoft.Tools.Deployer
 
 			if(!File.Exists(deploymentFilePath))
 			{
-				//打印部署文件不存在的消息（如果是静默模式则不打印提示消息）
-				if(!_variables.TryGetValue(VERBOSITY_OPTION, out var verbosity) || !string.Equals(verbosity, "quiet", StringComparison.OrdinalIgnoreCase))
-					_terminal.FileNotExists(CommandOutletColor.DarkMagenta, string.Format(Properties.Resources.Text_DeploymentFileNotExists, deploymentFilePath));
+				//如果指定部属文件路径是个目录，并且该目录下有一个名为.deploy的文件，则将该部属文件路径指向它
+				if(Directory.Exists(deploymentFilePath) && File.Exists(Path.Combine(deploymentFilePath, ".deploy")))
+					deploymentFilePath = Path.Combine(deploymentFilePath, ".deploy");
+				else
+				{
+					//打印部署文件不存在的消息（如果是静默模式则不打印提示消息）
+					if(!_variables.TryGetValue(VERBOSITY_OPTION, out var verbosity) || !string.Equals(verbosity, "quiet", StringComparison.OrdinalIgnoreCase))
+						_terminal.FileNotExists(CommandOutletColor.DarkMagenta, string.Format(Properties.Resources.Text_DeploymentFileNotExists, deploymentFilePath));
 
-				return new DeploymentCounter(1, 0);
+					return new DeploymentCounter(1, 0);
+				}
 			}
 
 			if(string.IsNullOrWhiteSpace(destinationDirectory))
