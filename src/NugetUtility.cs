@@ -33,45 +33,27 @@
 
 using System;
 using System.IO;
-
-using Zongsoft.Services;
-using Zongsoft.Terminals;
+using System.Collections.Generic;
 
 namespace Zongsoft.Tools.Deployer
 {
-	internal static class Utility
+	public static class NugetUtility
 	{
-		public static readonly char[] PATH_SEPARATORS = new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
+		private const string USERPROFILE_ENVIRONMENT = "USERPROFILE";
+		private const string NUGET_PACKAGES_ENVIRONMENT = "NUGET_PACKAGES";
 
-		public static bool IsDirectory(string path) => !string.IsNullOrEmpty(path) && IsDirectorySeparator(path[^1]);
-		public static bool IsDirectorySeparator(char chr) => chr == Path.DirectorySeparatorChar || chr == Path.AltDirectorySeparatorChar;
-
-		public static string EnsureDirectory(params string[] paths)
+		public static void Initialize(IDictionary<string, string> variables)
 		{
-			if(paths == null)
-				throw new ArgumentNullException(nameof(paths));
+			if(!variables.ContainsKey(USERPROFILE_ENVIRONMENT))
+				variables[USERPROFILE_ENVIRONMENT] = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
-			if(paths.Length == 0)
-				return string.Empty;
-
-			var fullPath = Path.Combine(paths);
-
-			if(!Directory.Exists(fullPath))
-				Directory.CreateDirectory(fullPath);
-
-			return fullPath;
+			if(!variables.ContainsKey(NUGET_PACKAGES_ENVIRONMENT) && variables.TryGetValue(USERPROFILE_ENVIRONMENT, out var home))
+				variables.TryAdd(NUGET_PACKAGES_ENVIRONMENT, Path.Combine(home, $".nuget{Path.DirectorySeparatorChar}packages"));
 		}
 
-		public static void FileNotExists(this ITerminal terminal, string filePath)
+		public static bool TryGetPackagesDirectory(IDictionary<string, string> variables, out string directory)
 		{
-			terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Text_Warn);
-			terminal.WriteLine(CommandOutletColor.DarkYellow, string.Format(Properties.Resources.Text_FileNotExists, filePath));
-		}
-
-		public static void FileNotExists(this ITerminal terminal, CommandOutletColor color, string message)
-		{
-			terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Text_Warn);
-			terminal.WriteLine(color, message);
+			return variables.TryGetValue(NUGET_PACKAGES_ENVIRONMENT, out directory) && !string.IsNullOrEmpty(directory);
 		}
 	}
 }

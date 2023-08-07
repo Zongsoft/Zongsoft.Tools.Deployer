@@ -11,7 +11,7 @@
  *
  * The MIT License (MIT)
  * 
- * Copyright (C) 2015-2017 Zongsoft Corporation <http://www.zongsoft.com>
+ * Copyright (C) 2015-2023 Zongsoft Corporation <http://www.zongsoft.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,46 +32,20 @@
  */
 
 using System;
-using System.IO;
-
-using Zongsoft.Services;
-using Zongsoft.Terminals;
+using System.Collections.Generic;
 
 namespace Zongsoft.Tools.Deployer
 {
-	internal static class Utility
+	/// <summary>
+	/// 提供路径修正和调节功能的接口。
+	/// </summary>
+	public interface IDirectoryRegulator
 	{
-		public static readonly char[] PATH_SEPARATORS = new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
-
-		public static bool IsDirectory(string path) => !string.IsNullOrEmpty(path) && IsDirectorySeparator(path[^1]);
-		public static bool IsDirectorySeparator(char chr) => chr == Path.DirectorySeparatorChar || chr == Path.AltDirectorySeparatorChar;
-
-		public static string EnsureDirectory(params string[] paths)
-		{
-			if(paths == null)
-				throw new ArgumentNullException(nameof(paths));
-
-			if(paths.Length == 0)
-				return string.Empty;
-
-			var fullPath = Path.Combine(paths);
-
-			if(!Directory.Exists(fullPath))
-				Directory.CreateDirectory(fullPath);
-
-			return fullPath;
-		}
-
-		public static void FileNotExists(this ITerminal terminal, string filePath)
-		{
-			terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Text_Warn);
-			terminal.WriteLine(CommandOutletColor.DarkYellow, string.Format(Properties.Resources.Text_FileNotExists, filePath));
-		}
-
-		public static void FileNotExists(this ITerminal terminal, CommandOutletColor color, string message)
-		{
-			terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Text_Warn);
-			terminal.WriteLine(color, message);
-		}
+		/// <summary>修正指定的目录路径。</summary>
+		/// <param name="directory">指定的待修正的目录路径。</param>
+		/// <param name="variables">指定的参数和环境变量集。</param>
+		/// <param name="result">输出参数，表示修正成功后的路径。</param>
+		/// <returns>如果为真则表示修正成功，否则表示未修正。</returns>
+		bool Regulate(string directory, IDictionary<string, string> variables, out string result);
 	}
 }

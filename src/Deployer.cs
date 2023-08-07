@@ -1,6 +1,13 @@
 ﻿/*
+ *   _____                                ______
+ *  /_   /  ____  ____  ____  _________  / __/ /_
+ *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
+ *   / /__/ /_/ / / / / /_/ /\_ \/ /_/ / __/ /_
+ *  /____/\____/_/ /_/\__  /____/\____/_/  \__/
+ *                   /____/
+ *
  * Authors:
- *   钟峰(Popeye Zhong) <zongsoft@qq.com>
+ *   钟峰(Popeye Zhong) <zongsoft@gmail.com>
  *
  * The MIT License (MIT)
  * 
@@ -31,7 +38,6 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 using Zongsoft.Services;
-using Zongsoft.Resources;
 using Zongsoft.Terminals;
 using Zongsoft.Configuration;
 using Zongsoft.Configuration.Profiles;
@@ -41,16 +47,15 @@ namespace Zongsoft.Tools.Deployer
 	public class Deployer
 	{
 		#region 常量定义
-		private const string DEPLOYMENTDIRECTORY_OPTION  = "deploymentDirectory";
-		private const string IGNOREDEPLOYMENTFILE_OPTION = "ignoreDeploymentFile";
-		private const string EXPANSION_OPTION = "expansion";
-		private const string OVERWRITE_OPTION = "overwrite";
-		private const string VERBOSITY_OPTION = "verbosity";
+		internal const string DEPLOYMENTDIRECTORY_OPTION  = "deploymentDirectory";
+		internal const string IGNOREDEPLOYMENTFILE_OPTION = "ignoreDeploymentFile";
+		internal const string EXPANSION_OPTION = "expansion";
+		internal const string OVERWRITE_OPTION = "overwrite";
+		internal const string VERBOSITY_OPTION = "verbosity";
 
-		private const string USERPROFILE_ENVIRONMENT = "USERPROFILE";
-		private const string NUGET_PACKAGES_ENVIRONMENT = "NUGET_PACKAGES";
-
+		//变量解析的正则组名称
 		private const string REGEX_VALUE_GROUP = "value";
+		//变量解析的正则表达式（变量包括两种语法：$(variable) 或 %variable%）
 		private static readonly Regex _REGEX_ = new(@"(?<opt>\$\((?<value>\w+)\))|(?<env>\%(?<value>\w+)\%)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
 		#endregion
 
@@ -63,23 +68,13 @@ namespace Zongsoft.Tools.Deployer
 		public Deployer(ITerminal terminal)
 		{
 			_terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
-			_variables = Zongsoft.Collections.DictionaryExtension.ToDictionary<string, string>(Environment.GetEnvironmentVariables(), StringComparer.OrdinalIgnoreCase);
-
-			if(!_variables.ContainsKey(USERPROFILE_ENVIRONMENT))
-				_variables[USERPROFILE_ENVIRONMENT] = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-
-			if(!_variables.ContainsKey(NUGET_PACKAGES_ENVIRONMENT) && _variables.TryGetValue(USERPROFILE_ENVIRONMENT, out var home))
-				_variables.TryAdd(NUGET_PACKAGES_ENVIRONMENT, Path.Combine(home, ".nuget/packages"));
+			_variables = Collections.DictionaryExtension.ToDictionary<string, string>(Environment.GetEnvironmentVariables(), StringComparer.OrdinalIgnoreCase);
+			NugetUtility.Initialize(_variables);
 		}
 		#endregion
 
 		#region 公共属性
-		public ITerminal Terminal
-		{
-			get => _terminal;
-			set => _terminal = value ?? throw new ArgumentNullException();
-		}
-
+		public ITerminal Terminal => _terminal;
 		public IDictionary<string, string> Variables => _variables;
 		#endregion
 
@@ -186,7 +181,7 @@ namespace Zongsoft.Tools.Deployer
 				destinationDirectory = Path.Combine(context.DestinationDirectory, Normalize(entry.Section.FullName.Replace(' ', Path.DirectorySeparatorChar), _variables));
 
 			//由于源路径中可能含有通配符，因此必须查找匹配的文件集
-			foreach(var sourceFile in GetFiles(sourcePath, _variables.ContainsKey(EXPANSION_OPTION)))
+			foreach(var sourceFile in GetFiles(sourcePath, _variables))
 			{
 				if(!sourceFile.Exists())
 				{
@@ -230,7 +225,7 @@ namespace Zongsoft.Tools.Deployer
 			if(string.IsNullOrWhiteSpace(text))
 				return string.Empty;
 
-			return _REGEX_.Replace(text, match =>
+			return _REGEX_.Replace(text.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar), match =>
 			{
 				if(match.Success && match.Groups.TryGetValue(REGEX_VALUE_GROUP, out var group))
 					return variables.TryGetValue(group.Value, out var value) ? value : null;
@@ -239,7 +234,7 @@ namespace Zongsoft.Tools.Deployer
 			});
 		}
 
-		private static IEnumerable<PathToken> GetFiles(string filePath, bool expansion)
+		private static IEnumerable<PathToken> GetFiles(string filePath, IDictionary<string, string> variables)
 		{
 			if(string.IsNullOrEmpty(filePath))
 				yield break;
@@ -250,9 +245,13 @@ namespace Zongsoft.Tools.Deployer
 			if(string.IsNullOrEmpty(fileName))
 				yield break;
 
-			foreach(var directory in GetDirectories(directoryName, expansion))
+			foreach(var directory in GetDirectories(directoryName, variables.ContainsKey(EXPANSION_OPTION)))
 			{
-				if(fileName.Contains("*") || fileName.Contains("?"))
+				//对当前目录路径进行修正和调整
+				if(DirectoryRegulator.Regulate(directory.Path, variables, out var result))
+					directory.Path = result;
+
+				if(fileName.Contains('*') || fileName.Contains('?'))
 				{
 					//如果指定目录不存在则跳过，否则后面的代码会引发系统IO异常
 					if(!Directory.Exists(directory.Path))
@@ -278,7 +277,7 @@ namespace Zongsoft.Tools.Deployer
 				return Array.Empty<PathToken>();
 
 			directory = Path.GetFullPath(directory);
-			var parts = Common.StringExtension.Slice(directory, new[] { '/', '\\' }).ToArray();
+			var parts = Common.StringExtension.Slice(directory, Utility.PATH_SEPARATORS).ToArray();
 			List<PathToken> directories = null;
 			var flags = 0;
 
@@ -298,7 +297,7 @@ namespace Zongsoft.Tools.Deployer
 
 					directories.AddRange(Directory.GetDirectories(origin, "*", SearchOption.AllDirectories).Select(p => PathToken.Create(p, origin)));
 				}
-				else if(parts[i].Contains("*") || parts.Contains("?"))
+				else if(parts[i].Contains('*') || parts.Contains("?"))
 				{
 					if(directories == null)
 						directories = new List<PathToken>();
@@ -379,7 +378,7 @@ namespace Zongsoft.Tools.Deployer
 			public PathToken(string path, string suffix = null)
 			{
 				this.Path = path;
-				this.Suffix = string.IsNullOrEmpty(suffix) ? null : suffix.Trim('/', '\\');
+				this.Suffix = string.IsNullOrEmpty(suffix) ? null : suffix.Trim(Utility.PATH_SEPARATORS);
 			}
 
 			public string Path;
@@ -390,7 +389,7 @@ namespace Zongsoft.Tools.Deployer
 			public void Combine(string path) => this.Path = System.IO.Path.Combine(this.Path, path);
 			public void AppendSuffix(string value)
 			{
-				if(string.IsNullOrEmpty(value) || value == "/" || value == "\\")
+				if(string.IsNullOrEmpty(value) || Utility.IsDirectory(value))
 					return;
 
 				if(string.IsNullOrEmpty(this.Suffix))

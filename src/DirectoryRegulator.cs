@@ -11,7 +11,7 @@
  *
  * The MIT License (MIT)
  * 
- * Copyright (C) 2015-2017 Zongsoft Corporation <http://www.zongsoft.com>
+ * Copyright (C) 2015-2023 Zongsoft Corporation <http://www.zongsoft.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,46 +32,21 @@
  */
 
 using System;
-using System.IO;
-
-using Zongsoft.Services;
-using Zongsoft.Terminals;
+using System.Collections.Generic;
 
 namespace Zongsoft.Tools.Deployer
 {
-	internal static class Utility
+	public static class DirectoryRegulator
 	{
-		public static readonly char[] PATH_SEPARATORS = new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
+		#region 公共字段
+		public static readonly IDirectoryRegulator Nuget = NugetRegulator.Instance;
+		#endregion
 
-		public static bool IsDirectory(string path) => !string.IsNullOrEmpty(path) && IsDirectorySeparator(path[^1]);
-		public static bool IsDirectorySeparator(char chr) => chr == Path.DirectorySeparatorChar || chr == Path.AltDirectorySeparatorChar;
-
-		public static string EnsureDirectory(params string[] paths)
+		#region 公共方法
+		public static bool Regulate(string directory, IDictionary<string, string> variables, out string result)
 		{
-			if(paths == null)
-				throw new ArgumentNullException(nameof(paths));
-
-			if(paths.Length == 0)
-				return string.Empty;
-
-			var fullPath = Path.Combine(paths);
-
-			if(!Directory.Exists(fullPath))
-				Directory.CreateDirectory(fullPath);
-
-			return fullPath;
+			return Nuget.Regulate(directory, variables, out result);
 		}
-
-		public static void FileNotExists(this ITerminal terminal, string filePath)
-		{
-			terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Text_Warn);
-			terminal.WriteLine(CommandOutletColor.DarkYellow, string.Format(Properties.Resources.Text_FileNotExists, filePath));
-		}
-
-		public static void FileNotExists(this ITerminal terminal, CommandOutletColor color, string message)
-		{
-			terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Text_Warn);
-			terminal.WriteLine(color, message);
-		}
+		#endregion
 	}
 }
