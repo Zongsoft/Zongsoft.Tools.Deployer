@@ -10,14 +10,23 @@
 		<Company>Zongsoft Studio</Company>
 		<Product>Zongsoft Deployment Tool</Product>
 		<Description>Zongsoft Application Deployment Tool.</Description>
-		<Copyright>Copyright(C) Zongsoft Corporation 2015-2022. All rights reserved.</Copyright>
+		<Copyright>Copyright(C) Zongsoft Corporation 2015-2023. All rights reserved.</Copyright>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<PackageProjectUrl>https://github.com/Zongsoft/Zongsoft.Tools.Deployer</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/Zongsoft.Tools.Deployer</RepositoryUrl>
 		<PackageIconUrl>https://github.com/Zongsoft/Guidelines/raw/master/zongsoft-logo(48x48).png</PackageIconUrl>
+		<PackageIcon>zongsoft-logo.png</PackageIcon>
+		<ApplicationIcon>..\zongsoft-logo.ico</ApplicationIcon>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\zongsoft-logo.png" Pack="true" PackagePath="\" Visible="true" />
+		<None Include="..\README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<Reference Include="Zongsoft.Core">
