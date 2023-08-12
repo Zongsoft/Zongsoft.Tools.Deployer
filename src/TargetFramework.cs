@@ -39,17 +39,17 @@ namespace Zongsoft.Tools.Deployer
 	{
 		#region 构造函数
 		public TargetFramework(string framework, TargetVersion frameworkVersion, string platform = null, TargetVersion platformVersion = default)
-        {
+		{
 			if(string.IsNullOrEmpty(framework))
 				throw new ArgumentNullException(nameof(framework));
 			if(frameworkVersion.Major <= 0)
 				throw new ArgumentOutOfRangeException(nameof(frameworkVersion));
 
-            this.Framework = framework;
+			this.Framework = framework;
 			this.FrameworkVersion = frameworkVersion;
 			this.Platform = platform;
 			this.PlatformVersion = platformVersion;
-        }
+		}
 		#endregion
 
 		#region 公共字段
