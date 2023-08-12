@@ -126,6 +126,12 @@
   <data name="Text.DirectoryNotExists" xml:space="preserve">
     <value>指定的“{0}”目录是不存在的。</value>
   </data>
+  <data name="Text.FileDeleteFailed" xml:space="preserve">
+    <value>指定的“{0}”文件删除失败。</value>
+  </data>
+  <data name="Text.FileDeleteSucceed" xml:space="preserve">
+    <value>指定的“{0}”文件删除成功。</value>
+  </data>
   <data name="Text.FileNotExists" xml:space="preserve">
     <value>指定的“{0}”文件是不存在的。</value>
   </data>
@@ -134,6 +140,9 @@
   </data>
   <data name="Text.MissingArguments" xml:space="preserve">
     <value>未指定部署文件参数且当前目录下没有默认(.deploy)部署文件。</value>
+  </data>
+  <data name="Text.Tips" xml:space="preserve">
+    <value>提示：</value>
   </data>
   <data name="Text.Warn" xml:space="preserve">
     <value>警告：</value>

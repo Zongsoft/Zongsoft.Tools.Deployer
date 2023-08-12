@@ -88,6 +88,24 @@ namespace Zongsoft.Tools.Deployer.Properties {
         }
         
         /// <summary>
+        ///   查找类似 指定的“{0}”文件删除失败。 的本地化字符串。
+        /// </summary>
+        internal static string Text_FileDeleteFailed {
+            get {
+                return ResourceManager.GetString("Text.FileDeleteFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 指定的“{0}”文件删除成功。 的本地化字符串。
+        /// </summary>
+        internal static string Text_FileDeleteSucceed {
+            get {
+                return ResourceManager.GetString("Text.FileDeleteSucceed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 指定的“{0}”文件是不存在的。 的本地化字符串。
         /// </summary>
         internal static string Text_FileNotExists {
@@ -111,6 +129,15 @@ namespace Zongsoft.Tools.Deployer.Properties {
         internal static string Text_MissingArguments {
             get {
                 return ResourceManager.GetString("Text.MissingArguments", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 提示： 的本地化字符串。
+        /// </summary>
+        internal static string Text_Tips {
+            get {
+                return ResourceManager.GetString("Text.Tips", resourceCulture);
             }
         }
         

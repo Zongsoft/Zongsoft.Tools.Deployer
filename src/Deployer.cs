@@ -98,7 +98,7 @@ namespace Zongsoft.Tools.Deployer
 				else
 				{
 					//打印部署文件不存在的消息（如果是静默模式则不打印提示消息）
-					if(!_variables.TryGetValue(VERBOSITY_OPTION, out var verbosity) || !string.Equals(verbosity, "quiet", StringComparison.OrdinalIgnoreCase))
+					if(!this.IsQuietMode)
 						_terminal.FileNotExists(CommandOutletColor.DarkMagenta, string.Format(Properties.Resources.Text_DeploymentFileNotExists, deploymentFilePath));
 
 					return new DeploymentCounter(1, 0);
@@ -169,27 +169,54 @@ namespace Zongsoft.Tools.Deployer
 
 		private void DeployEntry(ProfileEntry entry, DeploymentContext context)
 		{
-			var sourcePath = Normalize(entry.Name, _variables);
-
-			if(!Path.IsPathRooted(sourcePath))
-				sourcePath = Path.Combine(context.SourceDirectory, sourcePath);
-
 			var destinationName = string.IsNullOrWhiteSpace(entry.Value) ? string.Empty : Normalize(entry.Value, _variables);
 			var destinationDirectory = context.DestinationDirectory;
 
 			if(entry.Section != null)
 				destinationDirectory = Path.Combine(context.DestinationDirectory, Normalize(entry.Section.FullName.Replace(' ', Path.DirectorySeparatorChar), _variables));
 
+			//以叹号打头的部署条目表示将其对应目标位置的匹配文件删除
+			var deletabled = entry.Name[0] == '!';
+			var sourcePath = GetSource(deletabled ? entry.Name[1..] : entry.Name, out var condition);
+
+			//如果当前目标框架不匹配指定条件则忽略该部署条目
+			if(!Utility.IsTargetFramework(_variables, condition))
+				return;
+
+			sourcePath = Normalize(sourcePath, _variables);
+
+			if(!Path.IsPathRooted(sourcePath))
+				sourcePath = Path.Combine(context.SourceDirectory, sourcePath);
+
 			//由于源路径中可能含有通配符，因此必须查找匹配的文件集
 			foreach(var sourceFile in GetFiles(sourcePath, _variables))
 			{
+				var destinationFile = Path.Combine(GetDestinationDirectory(destinationDirectory, sourceFile.Suffix), string.IsNullOrEmpty(destinationName) ? Path.GetFileName(sourceFile.Path) : destinationName);
+
+				//如果是删除项
+				if(deletabled)
+				{
+					if(DeleteFile(destinationFile))
+					{
+						if(!this.IsQuietMode)
+							_terminal.FileDeletedSucceed(destinationFile);
+					}
+					else
+					{
+						if(!this.IsQuietMode)
+							_terminal.FileDeletedFailed(destinationFile);
+					}
+
+					continue;
+				}
+
 				if(!sourceFile.Exists())
 				{
 					//累加文件复制失败计数器
 					context.Counter.Fail();
 
 					//打印文件不存在的消息（如果是静默模式则不打印提示消息）
-					if(!_variables.TryGetValue(VERBOSITY_OPTION, out var verbosity) || !string.Equals(verbosity, "quiet", StringComparison.OrdinalIgnoreCase))
+					if(!this.IsQuietMode)
 						_terminal.FileNotExists(sourceFile.Path);
 
 					continue;
@@ -211,13 +238,36 @@ namespace Zongsoft.Tools.Deployer
 				_variables.TryGetValue(OVERWRITE_OPTION, out var overwrite);
 
 				//执行文件复制
-				if(CopyFile(sourceFile.Path, Path.Combine(GetDestinationDirectory(destinationDirectory, sourceFile.Suffix), string.IsNullOrEmpty(destinationName) ? Path.GetFileName(sourceFile.Path) : destinationName), overwrite))
+				if(CopyFile(sourceFile.Path, destinationFile, overwrite))
 					context.Counter.Success();
 				else
 					context.Counter.Fail();
 			}
 
 			static string GetDestinationDirectory(string root, string suffix) => string.IsNullOrEmpty(suffix) ? root : Path.Combine(root, suffix);
+		}
+
+		private static string GetSource(string text, out string condition)
+		{
+			if(!string.IsNullOrEmpty(text))
+			{
+				var position = text.IndexOf(':');
+
+				if(position < 0)
+				{
+					condition = null;
+					return text;
+				}
+
+				if(position > 0)
+				{
+					condition = position < text.Length - 1 ? text[(position + 1)..].Trim() : null;
+					return text[..position].Trim();
+				}
+			}
+
+			condition = null;
+			return text;
 		}
 
 		private static string Normalize(string text, IDictionary<string, string> variables)
@@ -340,6 +390,19 @@ namespace Zongsoft.Tools.Deployer
 			return directories.Where(token => !string.IsNullOrEmpty(token.Path));
 		}
 
+		private static bool DeleteFile(string filePath)
+		{
+			try
+			{
+				File.Delete(filePath);
+				return true;
+			}
+			catch
+			{
+				return false;
+			}
+		}
+
 		private static bool CopyFile(string source, string destination, string overwrite)
 		{
 			if(string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(destination))
@@ -370,6 +433,8 @@ namespace Zongsoft.Tools.Deployer
 			//如果指定的文件的扩展名为.deploy，则判断为部署文件
 			return string.Equals(Path.GetExtension(filePath), ".deploy", StringComparison.OrdinalIgnoreCase);
 		}
+
+		private bool IsQuietMode => _variables.TryGetValue(VERBOSITY_OPTION, out var verbosity) && string.Equals(verbosity, "quiet", StringComparison.OrdinalIgnoreCase);
 		#endregion
 
 		#region 嵌套子类

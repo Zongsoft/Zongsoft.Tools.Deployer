@@ -43,10 +43,6 @@ namespace Zongsoft.Tools.Deployer
 		public static readonly NugetRegulator Instance = new NugetRegulator();
 		#endregion
 
-		#region 常量定义
-		private const string TARGET_VARIABLE_NAME = "target";
-		#endregion
-
 		#region 私有构造
 		private NugetRegulator() { }
 		#endregion
@@ -67,21 +63,21 @@ namespace Zongsoft.Tools.Deployer
 			if(!directory.StartsWith(nugetDirectory, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
 				return false;
 
-			//如果没有指定“目标”参数则无需进行路径修整
-			if(!variables.TryGetValue(TARGET_VARIABLE_NAME, out var target) || string.IsNullOrEmpty(target))
+			//如果没有指定“目标框架”参数则无需进行路径修整
+			if(!Utility.TryGetTargetFramework(variables, out var framework))
 				return false;
 
-			//解析当前Nuget包路径中的前导部分和“目标”名部分
-			if(ResolveNugetDirectory(directory, out var precursor, out var targetInPath))
+			//解析当前Nuget包路径中的前导部分和“目标框架”名部分
+			if(ResolveNugetDirectory(directory, out var precursor, out var frameworkInPath))
 			{
-				//如果待替换的目录名就是“目标”名则不需要替换
-				if(targetInPath == target.AsSpan())
+				//如果待替换的目录名是“目标框架”名则不需要替换
+				if(frameworkInPath == framework.AsSpan())
 					return false;
 
-				//将Nuget包目录的最后的目录名替换成“目标”参数值
-				var regulatedPath = Path.Combine(precursor.ToString(), target);
+				//将Nuget包目录的最后的目录名替换成“目标框架”参数值
+				var regulatedPath = Path.Combine(precursor.ToString(), framework);
 
-				//如果替换成“目标”版本的Nuget包目录是存在的，则表示可替换成该目标包目录
+				//如果替换成“目标框架”版本的Nuget包目录是存在的，则表示可替换成该“目标框架”包目录
 				if(Directory.Exists(regulatedPath))
 				{
 					result = regulatedPath;
@@ -99,9 +95,9 @@ namespace Zongsoft.Tools.Deployer
 		 *	C:\Users\Administrator\.nuget\packages\mysql.data\8.1.0\lib\netstandard2.0
 		 *	
 		 * 前导路径 precursor 参数的返回值为：C:\Users\Administrator\.nuget\packages\mysql.data\8.1.0\lib
-		 * 路径目标 target    参数的返回值为：netstandard2.0
+		 * 路径目标 framework 参数的返回值为：netstandard2.0
 		 */
-		private static bool ResolveNugetDirectory(string directory, out ReadOnlySpan<char> precursor, out ReadOnlySpan<char> target)
+		private static bool ResolveNugetDirectory(string directory, out ReadOnlySpan<char> precursor, out ReadOnlySpan<char> framework)
 		{
 			int count = 0;
 			int position;
@@ -115,11 +111,11 @@ namespace Zongsoft.Tools.Deployer
 			{
 				var span = directory.AsSpan();
 				precursor = span[..position];
-				target = span.Slice(position + 1, directory.Length - position - count);
+				framework = span.Slice(position + 1, directory.Length - position - count);
 				return true;
 			}
 
-			target = ReadOnlySpan<char>.Empty;
+			framework = ReadOnlySpan<char>.Empty;
 			precursor = ReadOnlySpan<char>.Empty;
 			return false;
 		}
