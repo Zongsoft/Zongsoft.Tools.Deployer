@@ -39,7 +39,6 @@ using System.Text.RegularExpressions;
 
 using Zongsoft.Services;
 using Zongsoft.Terminals;
-using Zongsoft.Configuration;
 using Zongsoft.Configuration.Profiles;
 
 namespace Zongsoft.Tools.Deployer
@@ -47,7 +46,7 @@ namespace Zongsoft.Tools.Deployer
 	public class Deployer
 	{
 		#region 常量定义
-		internal const string DEPLOYMENTDIRECTORY_OPTION  = "deploymentDirectory";
+		internal const string DEPLOYMENTDIRECTORY_OPTION = "deploymentDirectory";
 		internal const string IGNOREDEPLOYMENTFILE_OPTION = "ignoreDeploymentFile";
 		internal const string EXPANSION_OPTION = "expansion";
 		internal const string OVERWRITE_OPTION = "overwrite";
@@ -69,6 +68,10 @@ namespace Zongsoft.Tools.Deployer
 		{
 			_terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
 			_variables = Collections.DictionaryExtension.ToDictionary<string, string>(Environment.GetEnvironmentVariables(), StringComparer.OrdinalIgnoreCase);
+
+			//将部署目录中的 appsettings.json 文件内容解析后加载到变量集
+			AppSettingsUtility.Load(_variables);
+			//初始化 Nuget 相关的变量
 			NugetUtility.Initialize(_variables);
 		}
 		#endregion

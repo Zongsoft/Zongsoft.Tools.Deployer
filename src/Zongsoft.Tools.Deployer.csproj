@@ -2,7 +2,7 @@
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
 		<TargetFrameworks>net6.0;net7.0;</TargetFrameworks>
-		<Version>6.0</Version>
+		<Version>6.1</Version>
 		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
 		<PackAsTool>true</PackAsTool>
 		<ToolCommandName>dotnet-deploy</ToolCommandName>
@@ -26,6 +26,7 @@
 	<ItemGroup>
 		<None Include="..\zongsoft-logo.png" Pack="true" PackagePath="\" Visible="true" />
 		<None Include="..\README.md" Pack="true" PackagePath="\" />
+		<None Include="..\README-zh_CN.md" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
 	<ItemGroup>

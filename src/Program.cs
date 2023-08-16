@@ -36,7 +36,6 @@ using System.IO;
 
 using Zongsoft.Common;
 using Zongsoft.Services;
-using Zongsoft.Resources;
 
 namespace Zongsoft.Tools.Deployer
 {
