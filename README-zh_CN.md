@@ -40,15 +40,38 @@ README: [English](https://github.com/Zongsoft/Zongsoft.Tools.Deployer/blob/maste
 
 ### 变量
 
-变量名不区分大小写。名称为 `Framework` 的变量表示 .NET *目标框架* 标识，有关该 *目标框架* 标识的定义请参考：https://learn.microsoft.com/zh-cn/dotnet/standard/frameworks
+本工具会依次加载环境变量、部署应用程序的`appsettings.json`文件内容、调用本工具的命令选项到变量集中，如果有重名则后加载的会覆盖之前加载的同名变量值。注意：变量名不区分大小写。
+
+- 如果 `appsettings.json` 中定义了名为 `ApplicationName` 的属性，则可以使用 `application` 作为该属性的变量别名。
+- 名称为 `Framework` 的变量表示 .NET *目标框架* 标识，有关该 *目标框架* 标识的定义请参考：https://learn.microsoft.com/zh-cn/dotnet/standard/frameworks
 
 ### 过滤
 
-**条目** 支持对 *目标框架* 进行过滤，源路径与过滤目标框架集之间以冒号分隔（*多个目标框架间以逗号或分号分隔*），过滤 *目标框架* 以`^`符结尾表示当前部署 *目标框架* 版本必须大于或等于该版本，如下所示：
+在条目的尾部以 `<` 和 `>` 括起来的部分即为过滤条件，不满足过滤条件的条目会被忽略。
+
+支持多个条件组合，每个条件由变量名和比较值组成，变量名若以 `!` 打头则表示对该条件的匹配结果取反；如果要比对多个值则以逗号分隔。如下所示：
 
 ```plaintext
-%NUGET_PACKAGES%/mysql.data/8.1.0/lib/netstandard2.1/*.dll  : net7.0^
-%NUGET_PACKAGES%/mysql.data/6.10.9/lib/netstandard2.0/*.dll : net5.0,net6.0
+../.deploy/options/$(cloud)/app.$(environment).option       = web.option    <application>
+../.deploy/options/$(cloud)/app.$(environment).option       = web.option    <!application>
+../.deploy/options/$(cloud)/app.$(environment)-debug.option = web.option    <preview:A,B,C>
+../.deploy/options/$(cloud)/app.$(environment)-debug.option = web.option    <!preview:X,Y,Z>
+../.deploy/options/$(cloud)/app.$(environment)-debug.option = web.option    <application | debug:on>
+../.deploy/options/$(cloud)/app.$(environment)-debug.option = web.option    <!application & !debug:on>
+```
+
+> 1. `<application>` 表示存在名为 `application` 的变量(*不论其内容*)，则结果为真。
+> 2. `<!application>` 表示不存在名为 `application` 的变量(*不论其内容*)，则结果为真。
+> 3. `<preview:A,B,C>` 表示名为 `preview` 的变量值为“`A`,`B`,`C`”(*忽略大小写*)中的任何一个，则结果为真。
+> 4. `<!preview:X,Y,Z>` 表示名为 `preview` 的变量值不是“`X`,`Y`,`Z`”(*忽略大小写*)中的任何一个，则结果为真。
+> 5. `<application | debug:on>` 表示存在名为 `application` 的变量(*不论其内容*) **或者** 名为 `debug` 的变量值为 `on`(*忽略大小写*)，则结果为真。
+> 6. `<!application & !debug:on>` 表示不存在名为 `application` 的变量(*不论其内容*) **并且** 名为 `debug` 的变量值不是 `on`(*忽略大小写*)，则结果为真。
+
+支持对 *目标框架* 进行匹配及版本比较，如果 *目标框架* 以`^`符结尾则表示当前部署 *目标框架* 版本必须大于或等于该版本，如下所示：
+
+```plaintext
+%NUGET_PACKAGES%/mysql.data/8.1.0/lib/netstandard2.1/*.dll     <framework:net7.0^>
+%NUGET_PACKAGES%/mysql.data/6.10.9/lib/netstandard2.0/*.dll    <framework:net5.0,net6.0>
 ```
 
 ## 安装

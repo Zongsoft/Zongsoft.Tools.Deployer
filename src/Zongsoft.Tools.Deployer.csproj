@@ -2,7 +2,7 @@
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
 		<TargetFrameworks>net6.0;net7.0;</TargetFrameworks>
-		<Version>6.1</Version>
+		<Version>6.2</Version>
 		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
 		<PackAsTool>true</PackAsTool>
 		<ToolCommandName>dotnet-deploy</ToolCommandName>

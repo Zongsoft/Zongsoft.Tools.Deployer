@@ -172,19 +172,22 @@ namespace Zongsoft.Tools.Deployer
 
 		private void DeployEntry(ProfileEntry entry, DeploymentContext context)
 		{
-			var destinationName = string.IsNullOrWhiteSpace(entry.Value) ? string.Empty : Normalize(entry.Value, _variables);
+			//获取部署条目的必须条件
+			(var entryName, var entryValue) = Utility.Requisition.GetRequisites(entry, out var requisites);
+
+			//如果不满足必须条件则忽略该部署条目
+			if(!Utility.Requisition.IsRequisites(_variables, requisites))
+				return;
+
+			var destinationName = string.IsNullOrWhiteSpace(entryValue) ? string.Empty : Normalize(entryValue, _variables);
 			var destinationDirectory = context.DestinationDirectory;
 
 			if(entry.Section != null)
 				destinationDirectory = Path.Combine(context.DestinationDirectory, Normalize(entry.Section.FullName.Replace(' ', Path.DirectorySeparatorChar), _variables));
 
 			//以叹号打头的部署条目表示将其对应目标位置的匹配文件删除
-			var deletabled = entry.Name[0] == '!';
-			var sourcePath = GetSource(deletabled ? entry.Name[1..] : entry.Name, out var condition);
-
-			//如果当前目标框架不匹配指定条件则忽略该部署条目
-			if(!Utility.IsTargetFramework(_variables, condition))
-				return;
+			var deletabled = entryName[0] == '!';
+			var sourcePath = deletabled ? entryName[1..] : entryName;
 
 			sourcePath = Normalize(sourcePath, _variables);
 
@@ -248,29 +251,6 @@ namespace Zongsoft.Tools.Deployer
 			}
 
 			static string GetDestinationDirectory(string root, string suffix) => string.IsNullOrEmpty(suffix) ? root : Path.Combine(root, suffix);
-		}
-
-		private static string GetSource(string text, out string condition)
-		{
-			if(!string.IsNullOrEmpty(text))
-			{
-				var position = text.IndexOf(':');
-
-				if(position < 0)
-				{
-					condition = null;
-					return text;
-				}
-
-				if(position > 0)
-				{
-					condition = position < text.Length - 1 ? text[(position + 1)..].Trim() : null;
-					return text[..position].Trim();
-				}
-			}
-
-			condition = null;
-			return text;
 		}
 
 		private static string Normalize(string text, IDictionary<string, string> variables)

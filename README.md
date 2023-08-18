@@ -39,15 +39,38 @@ If an entry starts with a `!` exclamation mark, it means to delete the file spec
 
 ### Variables
 
-Variable names are not case sensitive. The variable named `Framework` represents the .NET *TargetFramework* identity, for the detailed definition, please refer to: https://learn.microsoft.com/en-us/dotnet/standard/frameworks
+This tool will sequentially load the environment variables, the contents of the `appsettings.json` file of the deployed application, and the command options for calling this tool into the variable set. If the variable has the same name, the value loaded later will overwrite the value of the variable with the same name loaded before. **Note:** Variable names are not case sensitive.
+
+- If a property named `ApplicationName` is defined in `appsettings.json`, you can use `application` as a variable alias for that property.
+- The variable named `Framework` represents the .NET *TargetFramework* identity, which is defined in https://learn.microsoft.com/en-us/dotnet/standard/frameworks
 
 ### filtering
 
-The entry support filtering of target frameworks. Separate the source path and the filter target frameworks with a colon(multiple target frameworks are separated by comma or semicolon). The filter target framework ends with `^` to indicate that the current deployment target framework version must greater than or equal to the version, as follows:
+The part enclosed by `<` and `>` at the end of the entry is the filter condition, and entries that do not meet the filter criteria will be ignored.
+
+Multiple conditions are supported. Each condition consists of a variable name and the comparison values, If the variable name starts with `!`, it means that the matching result of the condition is negated; If you are comparing multiple values, separate them with commas. As follows:
 
 ```plaintext
-%NUGET_PACKAGES%/mysql.data/8.1.0/lib/netstandard2.1/*.dll  : net7.0^
-%NUGET_PACKAGES%/mysql.data/6.10.9/lib/netstandard2.0/*.dll : net5.0,net6.0
+../.deploy/options/$(cloud)/app.$(environment).option       = web.option    <application>
+../.deploy/options/$(cloud)/app.$(environment).option       = web.option    <!application>
+../.deploy/options/$(cloud)/app.$(environment)-debug.option = web.option    <preview:A,B,C>
+../.deploy/options/$(cloud)/app.$(environment)-debug.option = web.option    <!preview:X,Y,Z>
+../.deploy/options/$(cloud)/app.$(environment)-debug.option = web.option    <application | debug:on>
+../.deploy/options/$(cloud)/app.$(environment)-debug.option = web.option    <!application & !debug:on>
+```
+
+> 1. `<application>` means that there is a variable named `application` (*Regardless of its content*), then the result is true.
+> 2. `<!application>` means that there is no variable named `application` (*Regardless of its content*), then the result is true.
+> 3. `<preview:A,B,C>` means that the value of the variable named `preview` is any one of "`A`, `B`, `C`" (*Ignoring case*), then The result is true.
+> 4. `<!preview:X,Y,Z>` means that the value of the variable named `preview` is not any one of "`X`, `Y`, `Z`" (*Ignoring case*), then the result is true.
+> 5. `<application | debug:on>` indicates that there is a variable named `application` (*Regardless of its content*) **OR** a variable named `debug` is `on` (*Ignoring case*), the result is true.
+> 6. `<!application & !debug:on>` means that there is no variable named `application` (*Regardless of its content*) **AND** the variable named `debug` is not `on`(*Ignoring case*), the result is true.
+
+Supports matching and version comparison of *TargetFramework*. If *TargetFramework* ends with `^`, it means that the version of the current deployment *TargetFramework* must be greater than or equal to this version, as follows:
+
+```plaintext
+%NUGET_PACKAGES%/mysql.data/8.1.0/lib/netstandard2.1/*.dll     <framework:net7.0^>
+%NUGET_PACKAGES%/mysql.data/6.10.9/lib/netstandard2.0/*.dll    <framework:net5.0,net6.0>
 ```
 
 ## The tool setup
