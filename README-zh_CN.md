@@ -116,6 +116,15 @@ dotnet deploy -edition:Debug -framework:net7.0 MyProject1.deploy MyProject2.depl
 	- deploy-release.cmd
 		> `dotnet deploy -edition:Release -framework:net7.0`
 
+### 命令参数
+
+- `verbosity` 参数
+	- `quiet` 只显式必要的输出信息。
+- `overwrite` 参数
+	- `latest` 只有当源文件的最后修改时间大于目标文件的最后修改时间才执行文件复制部署，如果未指定该参数则默认始终覆盖。
+- `deploymentDirectory` 参数
+	- 指定的部署目录，如果未指定该参数则默认为当前目录。
+
 ### Nuget 包
 如果部署项为 Nuget 包目录下中的库文件，会优先匹配 `Framework` 变量指定的 *目标框架* 版本的库文件。
 

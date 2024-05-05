@@ -115,6 +115,16 @@ dotnet deploy -edition:Debug -framework:net7.0 MyProject1.deploy MyProject2.depl
 	- deploy-release.cmd
 		> `dotnet deploy -edition:Release -framework:net7.0`
 
+### Command arguments
+
+- `verbosity` argument
+	- `quiet` Only explicitly necessary output information.
+- `overwrite` argument
+	- `latest` Performs a file copy deployment only if the last modification time of the source file is greater than the last modification time of the destionation file. If this argument is not specified, it will always be overwritten by default.
+- `deploymentDirectory` argument
+	- The specified deployment directory. If this argument is not specified, it defaults to the current directory.
+
+Translated with DeepL.com (free version)
 ### Nuget Packages
 If the deployment entry is library files in the Nuget package directory, it will preferentially match the library files of the *TargetFramework* version specified by the `Framework` variable.
 
