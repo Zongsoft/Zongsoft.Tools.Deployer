@@ -37,7 +37,6 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-using Zongsoft.Services;
 using Zongsoft.Terminals;
 using Zongsoft.Configuration.Profiles;
 
@@ -53,9 +52,9 @@ namespace Zongsoft.Tools.Deployer
 		internal const string VERBOSITY_OPTION = "verbosity";
 
 		//变量解析的正则组名称
-		private const string REGEX_VALUE_GROUP = "value";
+		private const string REGEX_VARIABLE_NAME = "name";
 		//变量解析的正则表达式（变量包括两种语法：$(variable) 或 %variable%）
-		private static readonly Regex _REGEX_ = new(@"(?<opt>\$\((?<value>\w+)\))|(?<env>\%(?<value>\w+)\%)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
+		private static readonly Regex _variableRegex = new(@"(?<opt>\$\((?<name>\w+)\))|(?<env>\%(?<name>\w+)\%)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
 		#endregion
 
 		#region 成员字段
@@ -64,7 +63,7 @@ namespace Zongsoft.Tools.Deployer
 		#endregion
 
 		#region 构造函数
-		public Deployer(ITerminal terminal)
+		public Deployer(ITerminal terminal, IEnumerable<KeyValuePair<string, string>> options)
 		{
 			_terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
 			_variables = Collections.DictionaryExtension.ToDictionary<string, string>(Environment.GetEnvironmentVariables(), StringComparer.OrdinalIgnoreCase);
@@ -73,6 +72,12 @@ namespace Zongsoft.Tools.Deployer
 			AppSettingsUtility.Load(_variables);
 			//初始化 Nuget 相关的变量
 			NugetUtility.Initialize(_variables);
+
+			if(options != null)
+			{
+				foreach(var option in options)
+					_variables[option.Key] = Normalize(option.Value, _variables, variable => throw new TerminalCommandExecutor.ExitException(-1, string.Format(Properties.Resources.VariableUndefinedInOption_Message, variable, option.Value)));
+			}
 		}
 		#endregion
 
@@ -90,19 +95,19 @@ namespace Zongsoft.Tools.Deployer
 			if(!Path.IsPathRooted(deploymentFilePath))
 				deploymentFilePath = Path.Combine(Environment.CurrentDirectory, deploymentFilePath);
 
-			//对部属文件路径进行参数规整
-			deploymentFilePath = Normalize(deploymentFilePath, _variables);
+			//对部署文件路径进行参数规整
+			deploymentFilePath = Normalize(deploymentFilePath, _variables, variable => _terminal.UndefinedVariable(variable, deploymentFilePath));
 
 			if(!File.Exists(deploymentFilePath))
 			{
-				//如果指定部属文件路径是个目录，并且该目录下有一个名为.deploy的文件，则将该部属文件路径指向它
+				//如果指定部署文件路径是个目录，并且该目录下有一个名为.deploy的文件，则将该部署文件路径指向它
 				if(Directory.Exists(deploymentFilePath) && File.Exists(Path.Combine(deploymentFilePath, ".deploy")))
 					deploymentFilePath = Path.Combine(deploymentFilePath, ".deploy");
 				else
 				{
 					//打印部署文件不存在的消息（如果是静默模式则不打印提示消息）
 					if(!this.IsQuietMode)
-						_terminal.FileNotExists(CommandOutletColor.DarkMagenta, string.Format(Properties.Resources.Text_DeploymentFileNotExists, deploymentFilePath));
+						_terminal.FileNotExists(deploymentFilePath);
 
 					return new DeploymentCounter(1, 0);
 				}
@@ -122,7 +127,7 @@ namespace Zongsoft.Tools.Deployer
 			}
 
 			//对目标目录路径进行参数规整
-			destinationDirectory = Normalize(destinationDirectory, _variables);
+			destinationDirectory = Normalize(destinationDirectory, _variables, variable => _terminal.UndefinedVariable(variable, destinationDirectory));
 
 			if(!Directory.Exists(destinationDirectory))
 				Directory.CreateDirectory(destinationDirectory);
@@ -158,7 +163,13 @@ namespace Zongsoft.Tools.Deployer
 					var section = (ProfileSection)item;
 
 					//确保部署的目标目录已经存在，如不存在则创建它
-					Utility.EnsureDirectory(context.DestinationDirectory, Normalize(section.FullName.Replace(' ', '/'), _variables));
+					Utility.EnsureDirectory(context.DestinationDirectory,
+						Normalize(
+							section.FullName.Replace(' ', '/'),
+							_variables,
+							variable => _terminal.UndefinedVariable(variable, $"[{section.FullName}]", section.Profile.FilePath, section.LineNumber)
+						)
+					);
 
 					foreach(var child in section.Items)
 						this.DeployItem(child, context);
@@ -179,17 +190,19 @@ namespace Zongsoft.Tools.Deployer
 			if(!Utility.Requisition.IsRequisites(_variables, requisites))
 				return;
 
-			var destinationName = string.IsNullOrWhiteSpace(entryValue) ? string.Empty : Normalize(entryValue, _variables);
+			var destinationName = string.IsNullOrWhiteSpace(entryValue) ? string.Empty :
+				Normalize(entryValue, _variables, variable => _terminal.UndefinedVariable(variable, entryValue, entry.Profile.FilePath, entry.LineNumber));
 			var destinationDirectory = context.DestinationDirectory;
 
 			if(entry.Section != null)
-				destinationDirectory = Path.Combine(context.DestinationDirectory, Normalize(entry.Section.FullName.Replace(' ', Path.DirectorySeparatorChar), _variables));
+				destinationDirectory = Path.Combine(context.DestinationDirectory,
+					Normalize(entry.Section.FullName.Replace(' ', Path.DirectorySeparatorChar), _variables, variable => _terminal.UndefinedVariable(variable, $"[{entry.Section.FullName}]", entry.Profile.FilePath, entry.LineNumber)));
 
 			//以叹号打头的部署条目表示将其对应目标位置的匹配文件删除
 			var deletabled = entryName[0] == '!';
 			var sourcePath = deletabled ? entryName[1..] : entryName;
 
-			sourcePath = Normalize(sourcePath, _variables);
+			sourcePath = Normalize(sourcePath, _variables, variable => _terminal.UndefinedVariable(variable, entryName, entry.Profile.FilePath, entry.LineNumber));
 
 			if(!Path.IsPathRooted(sourcePath))
 				sourcePath = Path.Combine(context.SourceDirectory, sourcePath);
@@ -253,15 +266,20 @@ namespace Zongsoft.Tools.Deployer
 			static string GetDestinationDirectory(string root, string suffix) => string.IsNullOrEmpty(suffix) ? root : Path.Combine(root, suffix);
 		}
 
-		private static string Normalize(string text, IDictionary<string, string> variables)
+		private static string Normalize(string text, IDictionary<string, string> variables, Action<string> failure)
 		{
 			if(string.IsNullOrWhiteSpace(text))
 				return string.Empty;
 
-			return _REGEX_.Replace(text.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar), match =>
+			return _variableRegex.Replace(text.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar), match =>
 			{
-				if(match.Success && match.Groups.TryGetValue(REGEX_VALUE_GROUP, out var group))
-					return variables.TryGetValue(group.Value, out var value) ? value : null;
+				if(match.Success && match.Groups.TryGetValue(REGEX_VARIABLE_NAME, out var group))
+				{
+					if(variables.TryGetValue(group.Value, out var value))
+						return value;
+
+					failure?.Invoke(group.Value);
+				}
 
 				return null;
 			});
@@ -391,12 +409,12 @@ namespace Zongsoft.Tools.Deployer
 			if(string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(destination))
 				return false;
 
-			var requiredCope = true;
+			var copyRequired = true;
 
 			if(File.Exists(destination) && string.Equals(overwrite, "latest", StringComparison.OrdinalIgnoreCase))
-				requiredCope = File.GetLastWriteTime(source) > File.GetLastWriteTime(destination);
+				copyRequired = File.GetLastWriteTime(source) >= File.GetLastWriteTime(destination);
 
-			if(requiredCope)
+			if(copyRequired)
 			{
 				var directory = Path.GetDirectoryName(destination);
 				if(!Directory.Exists(directory))
@@ -405,10 +423,10 @@ namespace Zongsoft.Tools.Deployer
 				File.Copy(source, destination, true);
 			}
 
-			return requiredCope;
+			return copyRequired;
 		}
 
-		private static bool IsDeploymentFile(string filePath)
+		internal static bool IsDeploymentFile(string filePath)
 		{
 			if(string.IsNullOrWhiteSpace(filePath))
 				return false;

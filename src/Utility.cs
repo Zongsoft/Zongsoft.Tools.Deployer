@@ -117,26 +117,65 @@ namespace Zongsoft.Tools.Deployer
 
 		public static void FileDeletedSucceed(this ITerminal terminal, string filePath)
 		{
-			terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Text_Tips);
-			terminal.WriteLine(CommandOutletColor.DarkCyan, string.Format(Properties.Resources.Text_FileDeleteSucceed, filePath));
+			terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Tips_Prompt);
+			terminal.WriteLine(CommandOutletColor.DarkCyan, string.Format(Properties.Resources.FileDeleteSucceed_Message, filePath));
 		}
 
 		public static void FileDeletedFailed(this ITerminal terminal, string filePath)
 		{
-			terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Text_Tips);
-			terminal.WriteLine(CommandOutletColor.DarkCyan, string.Format(Properties.Resources.Text_FileDeleteFailed, filePath));
+			terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Tips_Prompt);
+			terminal.WriteLine(CommandOutletColor.DarkCyan, string.Format(Properties.Resources.FileDeleteFailed_Message, filePath));
 		}
 
 		public static void FileNotExists(this ITerminal terminal, string filePath)
 		{
-			terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Text_Warn);
-			terminal.WriteLine(CommandOutletColor.DarkYellow, string.Format(Properties.Resources.Text_FileNotExists, filePath));
+			if(string.IsNullOrEmpty(filePath))
+				return;
+
+			terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Warn_Prompt);
+
+			if(Deployer.IsDeploymentFile(filePath))
+				terminal.WriteLine(CommandOutletColor.DarkMagenta, string.Format(Properties.Resources.DeploymentFileNotExists_Message, filePath));
+			else
+				terminal.WriteLine(CommandOutletColor.DarkYellow, string.Format(Properties.Resources.FileNotExists_Message, filePath));
 		}
 
-		public static void FileNotExists(this ITerminal terminal, CommandOutletColor color, string message)
+		public static void UndefinedVariable(this ITerminal terminal, string variable, string expression) => UndefinedVariable(terminal, variable, expression, null, -1);
+		public static void UndefinedVariable(this ITerminal terminal, string variable, string expression, string filePath, int lineNumber = -1)
 		{
-			terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Text_Warn);
-			terminal.WriteLine(color, message);
+			if(lineNumber >= 0)
+				filePath = $"{filePath} (#{lineNumber})";
+
+			terminal.Write(CommandOutletColor.Red, Properties.Resources.Error_Prompt);
+
+			if(string.IsNullOrEmpty(filePath))
+				terminal.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.VariableUndefined_Message, variable, expression));
+			else
+				terminal.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.VariableUndefinedInFile_Message, variable, expression, filePath));
+		}
+
+		public static void CompleteDeployment(this ITerminal terminal, string filePath, DeploymentCounter counter, bool final)
+		{
+			var content = CommandOutletContent
+				.Create(CommandOutletColor.DarkGreen, string.Format(Properties.Resources.DeploymentComplete_Message, filePath, counter.Total))
+				.Append(Properties.Resources.DeploymentComplete_CountBegin)
+				.Append(CommandOutletColor.Green, string.Format(Properties.Resources.DeploymentComplete_SucceedCount, counter.Successes))
+				.Append(Properties.Resources.DeploymentComplete_CountSparator)
+				.Append(CommandOutletColor.DarkRed, string.Format(Properties.Resources.DeploymentComplete_FailedCount, counter.Failures))
+				.Append(Properties.Resources.DeploymentComplete_CountEnd);
+
+			var count = 0;
+			var message = CommandOutletContent.GetFullText(content);
+
+			for(int i = 0; i < message.Length; i++)
+				count += char.IsAscii(message[i]) ? 1 : 2;
+
+			terminal.WriteLine(new string('-', count));
+			terminal.WriteLine(content);
+			terminal.WriteLine(new string('-', count));
+
+			if(!final)
+				terminal.WriteLine();
 		}
 
 		/// <summary>

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -118,60 +118,60 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="DeploymentComplete.CountBegin" xml:space="preserve">
-    <value>(</value>
+    <value>（</value>
   </data>
   <data name="DeploymentComplete.CountEnd" xml:space="preserve">
-    <value>)</value>
+    <value>）</value>
   </data>
   <data name="DeploymentComplete.CountSparator" xml:space="preserve">
-    <value>, </value>
+    <value>，</value>
   </data>
   <data name="DeploymentComplete.FailedCount" xml:space="preserve">
-    <value>Failure: {0}</value>
+    <value>失败 {0} 次</value>
   </data>
   <data name="DeploymentComplete.Message" xml:space="preserve">
-    <value>Deploy the {0} file is complete and a total of {1} file copy operations have been performed.</value>
+    <value>部署 {0} 文件完成，总计执行了 {1} 次文件复制操作。</value>
   </data>
   <data name="DeploymentComplete.SucceedCount" xml:space="preserve">
-    <value>Success: {0}</value>
+    <value>成功 {0} 次</value>
   </data>
   <data name="DeploymentFileNotExists.Message" xml:space="preserve">
-    <value>The specified {0} deployment file does not exist.</value>
+    <value>指定的 {0} 部署文件是不存在的。</value>
   </data>
   <data name="DirectoryNotExists.Message" xml:space="preserve">
-    <value>The specified {0} directory does not exist.</value>
+    <value>指定的 {0} 目录是不存在的。</value>
   </data>
   <data name="Error.Prompt" xml:space="preserve">
-    <value>Error: </value>
+    <value>错误：</value>
   </data>
   <data name="FileDeleteFailed.Message" xml:space="preserve">
-    <value>The specified {0} file failed to be deleted.</value>
+    <value>指定的 {0} 文件删除失败。</value>
   </data>
   <data name="FileDeleteSucceed.Message" xml:space="preserve">
-    <value>The specified {0} file was deleted successfully.</value>
+    <value>指定的 {0} 文件删除成功。</value>
   </data>
   <data name="FileNotExists.Message" xml:space="preserve">
-    <value>The specified {0} file does not exist.</value>
+    <value>指定的 {0} 文件是不存在的。</value>
   </data>
   <data name="InvalidArgumentFormat.Message" xml:space="preserve">
-    <value>The input "{0}" is an invalid parameter format.</value>
+    <value>输入的“{0}”是无效的参数格式。</value>
   </data>
   <data name="MissingArguments.Message" xml:space="preserve">
-    <value>The deployment file parameter is not specified and there is no default deployment file(.deploy) in the current directory.</value>
+    <value>未指定部署文件参数且当前目录下没有默认(.deploy)部署文件。</value>
   </data>
   <data name="Tips.Prompt" xml:space="preserve">
-    <value>Tips: </value>
+    <value>提示：</value>
   </data>
   <data name="VariableUndefined.Message" xml:space="preserve">
-    <value>The {0} variable in the {1} expression is undefined.</value>
+    <value>在 {1} 表达式中的 {0} 变量未定义。</value>
   </data>
   <data name="VariableUndefinedInFile.Message" xml:space="preserve">
-    <value>The {0} variable in the {1} expression is undefined and located in the {2} file.</value>
+    <value>在 {1} 表达式中的 {0} 变量未定义，位于 {2} 文件。</value>
   </data>
   <data name="VariableUndefinedInOption.Message" xml:space="preserve">
-    <value>The specified {1} command option value contains an undefined {0} variable.</value>
+    <value>指定的 {1} 命令选项值中含有未定义的 {0} 变量。</value>
   </data>
   <data name="Warn.Prompt" xml:space="preserve">
-    <value>Warn: </value>
+    <value>警告：</value>
   </data>
 </root>

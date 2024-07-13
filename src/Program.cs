@@ -58,26 +58,29 @@ namespace Zongsoft.Tools.Deployer
 				var paths = expression.Arguments.Length > 0 ? expression.Arguments : new[] { DEFAULT_DEPLOYMENT_FILENAME };
 
 				//创建部署器类的实例
-				var deployer = new Deployer(Zongsoft.Terminals.ConsoleTerminal.Instance);
-
-				//将命令行选项添加到部署器的环境变量中
-				if(expression.Options.Count > 0)
-				{
-					foreach(var option in expression.Options)
-					{
-						deployer.Variables[option.Key] = option.Value;
-					}
-				}
+				var deployer = new Deployer(Zongsoft.Terminals.ConsoleTerminal.Instance, expression.Options);
 
 				//依次部署指定的部署文件
-				foreach(var path in paths)
+				for(int i = 0; i < paths.Length; i++)
 				{
 					//部署指定的文件
-					var counter = deployer.Deploy(path);
+					var counter = deployer.Deploy(paths[i]);
 
 					//打印部署的结果信息
-					deployer.Terminal.WriteLine(CommandOutletColor.DarkGreen, string.Format(Properties.Resources.Text_Deploy_CompleteInfo, Path.GetFullPath(path), counter.Total, counter.Successes, counter.Failures));
+					deployer.Terminal.CompleteDeployment(Path.GetFullPath(paths[i]), counter, i >= paths.Length - 1);
 				}
+			}
+			catch(Terminals.TerminalCommandExecutor.ExitException ex)
+			{
+				//设置控制台前景色为“红色”
+				Console.ForegroundColor = ConsoleColor.Red;
+
+				//打印异常消息
+				if(!string.IsNullOrEmpty(ex.Message))
+					Console.Error.WriteLine(ex.Message);
+
+				//重置控制台的前景色
+				Console.ResetColor();
 			}
 			catch(Exception ex)
 			{
@@ -101,7 +104,7 @@ namespace Zongsoft.Tools.Deployer
 				return true;
 
 			Console.ForegroundColor = ConsoleColor.DarkRed;
-			Console.WriteLine(Properties.Resources.Text_MissingArguments);
+			Console.WriteLine(Properties.Resources.MissingArguments_Message);
 			Console.ResetColor();
 
 			return false;

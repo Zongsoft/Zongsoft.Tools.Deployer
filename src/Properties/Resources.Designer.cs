@@ -61,92 +61,173 @@ namespace Zongsoft.Tools.Deployer.Properties {
         }
         
         /// <summary>
-        ///   查找类似 部署“{0}”文件，总计执行了{1}次文件复制（成功{2}次；失败{3}次）。 的本地化字符串。
+        ///   查找类似 ( 的本地化字符串。
         /// </summary>
-        internal static string Text_Deploy_CompleteInfo {
+        internal static string DeploymentComplete_CountBegin {
             get {
-                return ResourceManager.GetString("Text.Deploy.CompleteInfo", resourceCulture);
+                return ResourceManager.GetString("DeploymentComplete.CountBegin", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   查找类似 指定的“{0}”部署文件是不存在的。 的本地化字符串。
+        ///   查找类似 ) 的本地化字符串。
         /// </summary>
-        internal static string Text_DeploymentFileNotExists {
+        internal static string DeploymentComplete_CountEnd {
             get {
-                return ResourceManager.GetString("Text.DeploymentFileNotExists", resourceCulture);
+                return ResourceManager.GetString("DeploymentComplete.CountEnd", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   查找类似 指定的“{0}”目录是不存在的。 的本地化字符串。
+        ///   查找类似 ,  的本地化字符串。
         /// </summary>
-        internal static string Text_DirectoryNotExists {
+        internal static string DeploymentComplete_CountSparator {
             get {
-                return ResourceManager.GetString("Text.DirectoryNotExists", resourceCulture);
+                return ResourceManager.GetString("DeploymentComplete.CountSparator", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   查找类似 指定的“{0}”文件删除失败。 的本地化字符串。
+        ///   查找类似 Failure: {0} 的本地化字符串。
         /// </summary>
-        internal static string Text_FileDeleteFailed {
+        internal static string DeploymentComplete_FailedCount {
             get {
-                return ResourceManager.GetString("Text.FileDeleteFailed", resourceCulture);
+                return ResourceManager.GetString("DeploymentComplete.FailedCount", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   查找类似 指定的“{0}”文件删除成功。 的本地化字符串。
+        ///   查找类似 Deploy the {0} file is complete and a total of {1} file copy operations have been performed. 的本地化字符串。
         /// </summary>
-        internal static string Text_FileDeleteSucceed {
+        internal static string DeploymentComplete_Message {
             get {
-                return ResourceManager.GetString("Text.FileDeleteSucceed", resourceCulture);
+                return ResourceManager.GetString("DeploymentComplete.Message", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   查找类似 指定的“{0}”文件是不存在的。 的本地化字符串。
+        ///   查找类似 Success: {0} 的本地化字符串。
         /// </summary>
-        internal static string Text_FileNotExists {
+        internal static string DeploymentComplete_SucceedCount {
             get {
-                return ResourceManager.GetString("Text.FileNotExists", resourceCulture);
+                return ResourceManager.GetString("DeploymentComplete.SucceedCount", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   查找类似 输入的“{0}”是无效的参数格式。 的本地化字符串。
+        ///   查找类似 The specified {0} deployment file does not exist. 的本地化字符串。
         /// </summary>
-        internal static string Text_InvalidArgumentFormat {
+        internal static string DeploymentFileNotExists_Message {
             get {
-                return ResourceManager.GetString("Text.InvalidArgumentFormat", resourceCulture);
+                return ResourceManager.GetString("DeploymentFileNotExists.Message", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   查找类似 未指定部署文件参数且当前目录下没有默认(.deploy)部署文件。 的本地化字符串。
+        ///   查找类似 The specified {0} directory does not exist. 的本地化字符串。
         /// </summary>
-        internal static string Text_MissingArguments {
+        internal static string DirectoryNotExists_Message {
             get {
-                return ResourceManager.GetString("Text.MissingArguments", resourceCulture);
+                return ResourceManager.GetString("DirectoryNotExists.Message", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   查找类似 提示： 的本地化字符串。
+        ///   查找类似 Error:  的本地化字符串。
         /// </summary>
-        internal static string Text_Tips {
+        internal static string Error_Prompt {
             get {
-                return ResourceManager.GetString("Text.Tips", resourceCulture);
+                return ResourceManager.GetString("Error.Prompt", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   查找类似 警告： 的本地化字符串。
+        ///   查找类似 The specified {0} file failed to be deleted. 的本地化字符串。
         /// </summary>
-        internal static string Text_Warn {
+        internal static string FileDeleteFailed_Message {
             get {
-                return ResourceManager.GetString("Text.Warn", resourceCulture);
+                return ResourceManager.GetString("FileDeleteFailed.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified {0} file was deleted successfully. 的本地化字符串。
+        /// </summary>
+        internal static string FileDeleteSucceed_Message {
+            get {
+                return ResourceManager.GetString("FileDeleteSucceed.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified {0} file does not exist. 的本地化字符串。
+        /// </summary>
+        internal static string FileNotExists_Message {
+            get {
+                return ResourceManager.GetString("FileNotExists.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The input &quot;{0}&quot; is an invalid parameter format. 的本地化字符串。
+        /// </summary>
+        internal static string InvalidArgumentFormat_Message {
+            get {
+                return ResourceManager.GetString("InvalidArgumentFormat.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The deployment file parameter is not specified and there is no default deployment file(.deploy) in the current directory. 的本地化字符串。
+        /// </summary>
+        internal static string MissingArguments_Message {
+            get {
+                return ResourceManager.GetString("MissingArguments.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Tips:  的本地化字符串。
+        /// </summary>
+        internal static string Tips_Prompt {
+            get {
+                return ResourceManager.GetString("Tips.Prompt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The {0} variable in the {1} expression is undefined. 的本地化字符串。
+        /// </summary>
+        internal static string VariableUndefined_Message {
+            get {
+                return ResourceManager.GetString("VariableUndefined.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The {0} variable in the {1} expression is undefined and located in the {2} file. 的本地化字符串。
+        /// </summary>
+        internal static string VariableUndefinedInFile_Message {
+            get {
+                return ResourceManager.GetString("VariableUndefinedInFile.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The specified {1} command option value contains an undefined {0} variable. 的本地化字符串。
+        /// </summary>
+        internal static string VariableUndefinedInOption_Message {
+            get {
+                return ResourceManager.GetString("VariableUndefinedInOption.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Warn:  的本地化字符串。
+        /// </summary>
+        internal static string Warn_Prompt {
+            get {
+                return ResourceManager.GetString("Warn.Prompt", resourceCulture);
             }
         }
     }

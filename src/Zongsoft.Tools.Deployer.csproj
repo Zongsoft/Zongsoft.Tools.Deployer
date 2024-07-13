@@ -2,7 +2,7 @@
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
 		<TargetFrameworks>net6.0;net7.0;net8.0;</TargetFrameworks>
-		<Version>6.3</Version>
+		<Version>6.5</Version>
 		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
 		<PackAsTool>true</PackAsTool>
 		<ToolCommandName>dotnet-deploy</ToolCommandName>
@@ -10,7 +10,7 @@
 		<Company>Zongsoft Studio</Company>
 		<Product>Zongsoft Deployment Tool</Product>
 		<Description>Zongsoft Application Deployment Tool.</Description>
-		<Copyright>Copyright(C) Zongsoft Corporation 2015-2023. All rights reserved.</Copyright>
+		<Copyright>Copyright(C) Zongsoft Corporation 2015-2024. All rights reserved.</Copyright>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
