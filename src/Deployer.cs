@@ -45,8 +45,8 @@ namespace Zongsoft.Tools.Deployer
 	public class Deployer
 	{
 		#region 常量定义
-		internal const string DEPLOYMENTDIRECTORY_OPTION = "deploymentDirectory";
 		internal const string IGNOREDEPLOYMENTFILE_OPTION = "ignoreDeploymentFile";
+		internal const string DESTINATION_OPTION = "destination";
 		internal const string EXPANSION_OPTION = "expansion";
 		internal const string OVERWRITE_OPTION = "overwrite";
 		internal const string VERBOSITY_OPTION = "verbosity";
@@ -105,17 +105,16 @@ namespace Zongsoft.Tools.Deployer
 					deploymentFilePath = Path.Combine(deploymentFilePath, ".deploy");
 				else
 				{
-					//打印部署文件不存在的消息（如果是静默模式则不打印提示消息）
-					if(!this.IsQuietMode)
-						_terminal.FileNotExists(deploymentFilePath);
-
+					//打印部署文件不存在的消息
+					_terminal.FileNotExists(deploymentFilePath);
+					//返回部署计数器
 					return new DeploymentCounter(1, 0);
 				}
 			}
 
 			if(string.IsNullOrWhiteSpace(destinationDirectory))
 			{
-				if(_variables.TryGetValue(DEPLOYMENTDIRECTORY_OPTION, out destinationDirectory))
+				if(_variables.TryGetValue(DESTINATION_OPTION, out destinationDirectory))
 				{
 					if(!Path.IsPathRooted(destinationDirectory))
 						destinationDirectory = Path.Combine(Environment.CurrentDirectory, destinationDirectory);
