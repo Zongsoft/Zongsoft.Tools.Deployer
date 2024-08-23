@@ -33,21 +33,23 @@
 
 using System;
 using System.IO;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace Zongsoft.Tools.Deployer
 {
 	public class DeploymentContext
 	{
 		#region 构造函数
-		public DeploymentContext(Deployer deployer, Zongsoft.Configuration.Profiles.Profile deploymentProfile, string destinationDirectory)
+		public DeploymentContext(Deployer deployer, Zongsoft.Configuration.Profiles.Profile profile, string destinationDirectory)
 		{
 			if(string.IsNullOrWhiteSpace(destinationDirectory))
 				throw new ArgumentNullException(nameof(destinationDirectory));
 
 			this.Deployer = deployer ?? throw new ArgumentNullException(nameof(deployer));
-			this.DeploymentProfile = deploymentProfile ?? throw new ArgumentNullException(nameof(deploymentProfile));
+			this.Profile = profile ?? throw new ArgumentNullException(nameof(profile));
 			this.DestinationDirectory = destinationDirectory;
-			this.Counter = new DeploymentCounter();
+			this.Counter = new DeploymentCounter(profile.FilePath);
 		}
 		#endregion
 
@@ -55,8 +57,9 @@ namespace Zongsoft.Tools.Deployer
 		public Deployer Deployer { get; init; }
 		public DeploymentCounter Counter { get; init; }
 		public string DestinationDirectory { get; init; }
-		public Configuration.Profiles.Profile DeploymentProfile { get; init; }
-		public string SourceDirectory => Path.GetDirectoryName(this.DeploymentProfile.FilePath);
+		public Configuration.Profiles.Profile Profile { get; init; }
+		public string SourceDirectory => Path.GetDirectoryName(this.Profile.FilePath);
+		public IDictionary<string, string> Variables => this.Deployer.Variables;
 		#endregion
 
 		#region 公共方法
@@ -66,5 +69,19 @@ namespace Zongsoft.Tools.Deployer
 			this.Counter.Success(counter.Successes);
 		}
 		#endregion
+	}
+
+	public static class DeploymentContextUtility
+	{
+		public static string Normalize(this DeploymentContext context, string text, Action<string> failure) => Normalizer.Normalize(text, context.Variables, failure);
+
+		public static bool IsVerbosity(this DeploymentContext context, Verbosity verbosity) =>
+			context.Variables.TryGetValue(Deployer.VERBOSITY_OPTION, out var variable) && Enum.TryParse<Verbosity>(variable, true, out var value) && verbosity == value;
+
+		public static bool IsVerbosity(this DeploymentContext context, params Verbosity[] verbosities) =>
+			context.Variables.TryGetValue(Deployer.VERBOSITY_OPTION, out var variable) && Enum.TryParse<Verbosity>(variable, true, out var value) && verbosities != null && verbosities.Contains(value);
+
+		public static bool IsOverwrite(this DeploymentContext context, Overwrite overwrite) =>
+			context.Variables.TryGetValue(Deployer.OVERWRITE_OPTION, out var variable) && Enum.TryParse<Overwrite>(variable, true, out var value) && overwrite == value;
 	}
 }

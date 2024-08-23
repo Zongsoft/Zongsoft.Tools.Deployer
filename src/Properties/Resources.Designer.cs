@@ -160,6 +160,46 @@ namespace Zongsoft.Tools.Deployer.Properties {
         }
         
         /// <summary>
+        ///   查找类似 The {0} File deployment to
+        ///      {1} failed. 的本地化字符串。
+        /// </summary>
+        internal static string FileDeployFailed_Message {
+            get {
+                return ResourceManager.GetString("FileDeployFailed.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The {0} File deployment to
+        ///      {1} failed(overwrite={2}). Note: Because the destination file already exists. 的本地化字符串。
+        /// </summary>
+        internal static string FileDeployFailed_Never_Message {
+            get {
+                return ResourceManager.GetString("FileDeployFailed.Never.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The {0} File deployment to
+        ///      {1} failed(overwrite={2}). Note: Because the destination file is newer than the source file. 的本地化字符串。
+        /// </summary>
+        internal static string FileDeployFailed_Newer_Message {
+            get {
+                return ResourceManager.GetString("FileDeployFailed.Newer.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The {0} File deployment to
+        ///      {1} was successful. 的本地化字符串。
+        /// </summary>
+        internal static string FileDeploySucceed_Message {
+            get {
+                return ResourceManager.GetString("FileDeploySucceed.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 The specified {0} file does not exist. 的本地化字符串。
         /// </summary>
         internal static string FileNotExists_Message {
@@ -178,11 +218,65 @@ namespace Zongsoft.Tools.Deployer.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Latest 的本地化字符串。
+        /// </summary>
+        internal static string Latest {
+            get {
+                return ResourceManager.GetString("Latest", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 The deployment file parameter is not specified and there is no default deployment file(.deploy) in the current directory. 的本地化字符串。
         /// </summary>
         internal static string MissingArguments_Message {
             get {
                 return ResourceManager.GetString("MissingArguments.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 [NuGet] The download of the specified {0}@{1} package failed, please try again later or change the download source. 的本地化字符串。
+        /// </summary>
+        internal static string NuGet_DownloadFailed_Message {
+            get {
+                return ResourceManager.GetString("NuGet:DownloadFailed.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 [NuGet] The specified {0} argument is invalid and is located in the {1} file. 的本地化字符串。
+        /// </summary>
+        internal static string NuGet_IllegalArgument_Message {
+            get {
+                return ResourceManager.GetString("NuGet:IllegalArgument.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 [NuGet] The {1} version of the {0} package was not found. 的本地化字符串。
+        /// </summary>
+        internal static string NuGet_NotFound_Message {
+            get {
+                return ResourceManager.GetString("NuGet:NotFound.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The {0} resolver in the {1} expression is undefined. 的本地化字符串。
+        /// </summary>
+        internal static string ResolverUndefined_Message {
+            get {
+                return ResourceManager.GetString("ResolverUndefined.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The {0} resolver in the {1} expression is undefined and located in the {2} file. 的本地化字符串。
+        /// </summary>
+        internal static string ResolverUndefinedInFile_Message {
+            get {
+                return ResourceManager.GetString("ResolverUndefinedInFile.Message", resourceCulture);
             }
         }
         

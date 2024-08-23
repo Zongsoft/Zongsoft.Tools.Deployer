@@ -2,7 +2,7 @@
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
 		<TargetFrameworks>net6.0;net7.0;net8.0;</TargetFrameworks>
-		<Version>6.6</Version>
+		<Version>7.0.0</Version>
 		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
 		<PackAsTool>true</PackAsTool>
 		<ToolCommandName>dotnet-deploy</ToolCommandName>
@@ -30,15 +30,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Reference Include="Zongsoft.Core">
-			<HintPath>..\..\Framework\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
-		</Reference>
+		<PackageReference Include="NuGet.Protocol" Version="6.11.0" />
+		<PackageReference Include="Zongsoft.Core" Version="6.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Compile Update="Properties\Resources.Designer.cs">
-			<DesignTime>True</DesignTime>
 			<AutoGen>True</AutoGen>
+			<DesignTime>True</DesignTime>
 			<DependentUpon>Resources.resx</DependentUpon>
 		</Compile>
 	</ItemGroup>

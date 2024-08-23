@@ -39,21 +39,55 @@ namespace Zongsoft.Tools.Deployer
 {
 	public static class NugetUtility
 	{
+		#region 常量定义
+		private const string NUGET_SERVER_URL = @"https://api.nuget.org/v3/index.json";
+
+		private const string NUGET_SERVER_ENVIRONMENT = "nuget.server";
 		private const string USERPROFILE_ENVIRONMENT = "USERPROFILE";
 		private const string NUGET_PACKAGES_ENVIRONMENT = "NUGET_PACKAGES";
+		#endregion
 
+		#region 静态属性
+		private static string DEFAULT_PACKAGES_DIRECTORY => Path.Combine(NuGet.Common.NuGetEnvironment.GetFolderPath(NuGet.Common.NuGetFolderPath.NuGetHome), "packages");
+		#endregion
+
+		#region 初始方法
 		public static void Initialize(IDictionary<string, string> variables)
 		{
+			if(!variables.ContainsKey(NUGET_SERVER_ENVIRONMENT))
+				variables[NUGET_SERVER_ENVIRONMENT] = NUGET_SERVER_URL;
+
 			if(!variables.ContainsKey(USERPROFILE_ENVIRONMENT))
 				variables[USERPROFILE_ENVIRONMENT] = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
-			if(!variables.ContainsKey(NUGET_PACKAGES_ENVIRONMENT) && variables.TryGetValue(USERPROFILE_ENVIRONMENT, out var home))
-				variables.TryAdd(NUGET_PACKAGES_ENVIRONMENT, Path.Combine(home, $".nuget{Path.DirectorySeparatorChar}packages"));
+			if(!variables.TryGetValue(NUGET_PACKAGES_ENVIRONMENT, out var directory) || string.IsNullOrWhiteSpace(directory))
+				variables.TryAdd(NUGET_PACKAGES_ENVIRONMENT, DEFAULT_PACKAGES_DIRECTORY);
+		}
+		#endregion
+
+		#region 公共方法
+		public static string GetNugetServer(IDictionary<string, string> variables)
+		{
+			if(!variables.TryGetValue(NUGET_SERVER_ENVIRONMENT, out var server) || string.IsNullOrWhiteSpace(server))
+				server = NUGET_SERVER_URL;
+
+			return server;
 		}
 
-		public static bool TryGetPackagesDirectory(IDictionary<string, string> variables, out string directory)
+		public static string GetPackagesDirectory(IDictionary<string, string> variables)
 		{
-			return variables.TryGetValue(NUGET_PACKAGES_ENVIRONMENT, out directory) && !string.IsNullOrEmpty(directory);
+			return variables.TryGetValue(NUGET_PACKAGES_ENVIRONMENT, out var directory) && !string.IsNullOrEmpty(directory) ? directory : DEFAULT_PACKAGES_DIRECTORY;
 		}
+
+		private static NuGet.Packaging.VersionFolderPathResolver _folder = null;
+		public static string GetFolderPath(string packagesDirectory, string name, string version) => NuGet.Versioning.NuGetVersion.TryParse(version, out var ver) ? GetFolderPath(packagesDirectory, name, ver) : GetFolderPath(packagesDirectory, name);
+		public static string GetFolderPath(string packagesDirectory, string name, NuGet.Versioning.NuGetVersion version = null)
+		{
+			if(_folder == null)
+				_folder = new NuGet.Packaging.VersionFolderPathResolver(packagesDirectory);
+
+			return version == null ? _folder.GetVersionListPath(name) : _folder.GetInstallPath(name, version);
+		}
+		#endregion
 	}
 }

@@ -11,7 +11,7 @@
  *
  * The MIT License (MIT)
  * 
- * Copyright (C) 2015-2017 Zongsoft Corporation <http://www.zongsoft.com>
+ * Copyright (C) 2015-2024 Zongsoft Corporation <http://www.zongsoft.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -99,6 +99,15 @@ namespace Zongsoft.Tools.Deployer
 			return false;
 		}
 
+		public static bool IsDeploymentFile(string filePath)
+		{
+			if(string.IsNullOrWhiteSpace(filePath))
+				return false;
+
+			//如果指定的文件的扩展名为.deploy，则判断为部署文件
+			return string.Equals(Path.GetExtension(filePath), ".deploy", StringComparison.OrdinalIgnoreCase);
+		}
+
 		public static string EnsureDirectory(params string[] paths)
 		{
 			if(paths == null)
@@ -115,87 +124,11 @@ namespace Zongsoft.Tools.Deployer
 			return fullPath;
 		}
 
-		public static void FileDeletedSucceed(this ITerminal terminal, string filePath)
-		{
-			terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Tips_Prompt);
-			terminal.WriteLine(CommandOutletColor.DarkCyan, string.Format(Properties.Resources.FileDeleteSucceed_Message, filePath));
-		}
-
-		public static void FileDeletedFailed(this ITerminal terminal, string filePath)
-		{
-			terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Tips_Prompt);
-			terminal.WriteLine(CommandOutletColor.DarkCyan, string.Format(Properties.Resources.FileDeleteFailed_Message, filePath));
-		}
-
-		public static void FileNotExists(this ITerminal terminal, string filePath)
-		{
-			if(string.IsNullOrEmpty(filePath))
-				return;
-
-			terminal.Write(CommandOutletColor.Magenta, Properties.Resources.Warn_Prompt);
-
-			if(Deployer.IsDeploymentFile(filePath))
-				terminal.WriteLine(CommandOutletColor.DarkMagenta, string.Format(Properties.Resources.DeploymentFileNotExists_Message, filePath));
-			else
-				terminal.WriteLine(CommandOutletColor.DarkYellow, string.Format(Properties.Resources.FileNotExists_Message, filePath));
-		}
-
-		public static void UndefinedVariable(this ITerminal terminal, string variable, string expression) => UndefinedVariable(terminal, variable, expression, null, -1);
-		public static void UndefinedVariable(this ITerminal terminal, string variable, string expression, string filePath, int lineNumber = -1)
-		{
-			if(lineNumber >= 0)
-				filePath = $"{filePath} (#{lineNumber})";
-
-			terminal.Write(CommandOutletColor.Red, Properties.Resources.Error_Prompt);
-
-			if(string.IsNullOrEmpty(filePath))
-				terminal.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.VariableUndefined_Message, variable, expression));
-			else
-				terminal.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.VariableUndefinedInFile_Message, variable, expression, filePath));
-		}
-
-		public static void CompleteDeployment(this ITerminal terminal, string filePath, DeploymentCounter counter, bool final)
-		{
-			var content = CommandOutletContent
-				.Create(CommandOutletColor.DarkGreen, string.Format(Properties.Resources.DeploymentComplete_Message, filePath, counter.Total))
-				.Append(Properties.Resources.DeploymentComplete_CountBegin)
-				.Append(CommandOutletColor.Green, string.Format(Properties.Resources.DeploymentComplete_SucceedCount, counter.Successes))
-				.Append(Properties.Resources.DeploymentComplete_CountSparator)
-				.Append(CommandOutletColor.DarkRed, string.Format(Properties.Resources.DeploymentComplete_FailedCount, counter.Failures))
-				.Append(Properties.Resources.DeploymentComplete_CountEnd);
-
-			var count = 0;
-			var message = CommandOutletContent.GetFullText(content);
-
-			for(int i = 0; i < message.Length; i++)
-				count += char.IsAscii(message[i]) ? 1 : 2;
-
-			terminal.WriteLine(new string('-', count));
-			terminal.WriteLine(content);
-			terminal.WriteLine(new string('-', count));
-
-			if(!final)
-				terminal.WriteLine();
-		}
-
 		/// <summary>
 		/// 提供部署项必须条件处理的工具类。
 		/// </summary>
 		public static class Requisition
 		{
-			public static (string name, string value) GetRequisites(Configuration.Profiles.ProfileEntry entry, out string requisites)
-			{
-				var entryName = GetRequisites(entry.Name, out var requisitesName).ToString();
-				var entryValue = GetRequisites(entry.Value, out var requisitesValue).ToString();
-
-				if(requisitesName.IsEmpty)
-					requisites = requisitesValue.IsEmpty ? null : requisitesValue.ToString();
-				else
-					requisites = requisitesValue.IsEmpty ? requisitesName.ToString() : $"{requisitesName} & {requisitesValue}";
-
-				return (entryName, entryValue);
-			}
-
 			public static ReadOnlySpan<char> GetRequisites(ReadOnlySpan<char> text, out ReadOnlySpan<char> requisites)
 			{
 				requisites = default;

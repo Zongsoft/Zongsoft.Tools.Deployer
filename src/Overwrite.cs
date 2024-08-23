@@ -11,7 +11,7 @@
  *
  * The MIT License (MIT)
  * 
- * Copyright (C) 2015-2017 Zongsoft Corporation <http://www.zongsoft.com>
+ * Copyright (C) 2015-2024 Zongsoft Corporation <http://www.zongsoft.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,51 +35,18 @@ using System;
 
 namespace Zongsoft.Tools.Deployer
 {
-	public class DeploymentCounter
+	/// <summary>
+	/// 表示覆盖模式的枚举。
+	/// </summary>
+	public enum Overwrite
 	{
-		#region 成员字段
-		private int _failures;
-		private int _successes;
-		private readonly string _filePath;
-		#endregion
-
-		#region 构造函数
-		public DeploymentCounter(string filePath) => _filePath = filePath;
-		public DeploymentCounter(string filePath, int failures, int successes)
-		{
-			_filePath = filePath;
-			_failures = failures;
-			_successes = successes;
-		}
-		#endregion
-
-		#region 公共属性
-		public string FilePath => _filePath;
-		public int Total => _failures + _successes;
-		public int Failures => _failures;
-		public int Successes => _successes;
-		#endregion
-
-		#region 内部方法
-		internal int Fail(int interval = 1)
-		{
-			int result = 0;
-
-			for(int i = 0; i < interval; i++)
-				result = System.Threading.Interlocked.Increment(ref _failures);
-
-			return result;
-		}
-
-		internal int Success(int interval = 1)
-		{
-			int result = 0;
-
-			for(int i = 0; i < interval; i++)
-				result = System.Threading.Interlocked.Increment(ref _successes);
-
-			return result;
-		}
-		#endregion
+		/// <summary>始终覆盖</summary>
+		Alway = 0,
+		/// <summary>不覆盖</summary>
+		Never = 1,
+		/// <summary>如果较新，则覆盖</summary>
+		Newer = 2,
+		/// <summary>如果较新，则覆盖</summary>
+		Newest = 2,
 	}
 }

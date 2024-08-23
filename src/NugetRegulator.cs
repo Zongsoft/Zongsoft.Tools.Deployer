@@ -55,9 +55,8 @@ namespace Zongsoft.Tools.Deployer
 			if(variables == null || variables.Count == 0 || string.IsNullOrEmpty(directory))
 				return false;
 
-			//如果获取Nuget包路径失败则返回
-			if(!NugetUtility.TryGetPackagesDirectory(variables, out var nugetDirectory))
-				return false;
+			//获取Nuget包路径
+			var nugetDirectory = NugetUtility.GetPackagesDirectory(variables);
 
 			//如果指定的路径是不是Nuget包路径的子路径则返回
 			if(!directory.StartsWith(nugetDirectory, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))

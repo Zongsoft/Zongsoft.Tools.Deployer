@@ -11,7 +11,7 @@
  *
  * The MIT License (MIT)
  * 
- * Copyright (C) 2015-2017 Zongsoft Corporation <http://www.zongsoft.com>
+ * Copyright (C) 2015-2024 Zongsoft Corporation <http://www.zongsoft.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,9 +33,9 @@
 
 using System;
 using System.IO;
-using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 
 using Zongsoft.Terminals;
 using Zongsoft.Configuration.Profiles;
@@ -45,20 +45,17 @@ namespace Zongsoft.Tools.Deployer
 	public class Deployer
 	{
 		#region 常量定义
-		internal const string IGNOREDEPLOYMENTFILE_OPTION = "ignoreDeploymentFile";
-		internal const string DESTINATION_OPTION = "destination";
 		internal const string EXPANSION_OPTION = "expansion";
 		internal const string OVERWRITE_OPTION = "overwrite";
 		internal const string VERBOSITY_OPTION = "verbosity";
+		internal const string DESTINATION_OPTION = "destination";
+		internal const string IGNOREDEPLOYMENTFILE_OPTION = "ignoreDeploymentFile";
 
-		//变量解析的正则组名称
-		private const string REGEX_VARIABLE_NAME = "name";
-		//变量解析的正则表达式（变量包括两种语法：$(variable) 或 %variable%）
-		private static readonly Regex _variableRegex = new(@"(?<opt>\$\((?<name>\w+)\))|(?<env>\%(?<name>\w+)\%)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
+		internal const string DEFAULT_DEPLOYMENT_FILENAME = ".deploy";
 		#endregion
 
 		#region 成员字段
-		private ITerminal _terminal;
+		private readonly ITerminal _terminal;
 		private readonly IDictionary<string, string> _variables;
 		#endregion
 
@@ -76,7 +73,7 @@ namespace Zongsoft.Tools.Deployer
 			if(options != null)
 			{
 				foreach(var option in options)
-					_variables[option.Key] = Normalize(option.Value, _variables, variable => throw new TerminalCommandExecutor.ExitException(-1, string.Format(Properties.Resources.VariableUndefinedInOption_Message, variable, option.Value)));
+					_variables[option.Key] = this.Normalize(option.Value, variable => throw new TerminalCommandExecutor.ExitException(-1, string.Format(Properties.Resources.VariableUndefinedInOption_Message, variable, option.Value)));
 			}
 		}
 		#endregion
@@ -87,7 +84,8 @@ namespace Zongsoft.Tools.Deployer
 		#endregion
 
 		#region 公共方法
-		public DeploymentCounter Deploy(string deploymentFilePath, string destinationDirectory = null)
+		public Task<DeploymentCounter> DeployAsync(string deploymentFilePath, CancellationToken cancellation = default) => DeployAsync(deploymentFilePath, null, cancellation);
+		public async Task<DeploymentCounter> DeployAsync(string deploymentFilePath, string destinationDirectory, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(deploymentFilePath))
 				throw new ArgumentNullException(nameof(deploymentFilePath));
@@ -96,7 +94,7 @@ namespace Zongsoft.Tools.Deployer
 				deploymentFilePath = Path.Combine(Environment.CurrentDirectory, deploymentFilePath);
 
 			//对部署文件路径进行参数规整
-			deploymentFilePath = Normalize(deploymentFilePath, _variables, variable => _terminal.UndefinedVariable(variable, deploymentFilePath));
+			deploymentFilePath = this.Normalize(deploymentFilePath, variable => _terminal.UndefinedVariable(variable, deploymentFilePath));
 
 			if(!File.Exists(deploymentFilePath))
 			{
@@ -108,7 +106,7 @@ namespace Zongsoft.Tools.Deployer
 					//打印部署文件不存在的消息
 					_terminal.FileNotExists(deploymentFilePath);
 					//返回部署计数器
-					return new DeploymentCounter(1, 0);
+					return new DeploymentCounter(deploymentFilePath, 1, 0);
 				}
 			}
 
@@ -126,7 +124,7 @@ namespace Zongsoft.Tools.Deployer
 			}
 
 			//对目标目录路径进行参数规整
-			destinationDirectory = Normalize(destinationDirectory, _variables, variable => _terminal.UndefinedVariable(variable, destinationDirectory));
+			destinationDirectory = this.Normalize(destinationDirectory, variable => _terminal.UndefinedVariable(variable, destinationDirectory));
 
 			if(!Directory.Exists(destinationDirectory))
 				Directory.CreateDirectory(destinationDirectory);
@@ -134,9 +132,9 @@ namespace Zongsoft.Tools.Deployer
 			//创建部署上下文对象
 			var context = this.CreateContext(deploymentFilePath, destinationDirectory);
 
-			foreach(var item in context.DeploymentProfile.Items)
+			foreach(var item in context.Profile.Items)
 			{
-				this.DeployItem(item, context);
+				await this.DeployItemAsync(context, item, cancellation);
 			}
 
 			return context.Counter;
@@ -154,7 +152,7 @@ namespace Zongsoft.Tools.Deployer
 		#endregion
 
 		#region 私有方法
-		private void DeployItem(ProfileItem item, DeploymentContext context)
+		private async Task DeployItemAsync(DeploymentContext context, ProfileItem item, CancellationToken cancellation)
 		{
 			switch(item.ItemType)
 			{
@@ -163,278 +161,41 @@ namespace Zongsoft.Tools.Deployer
 
 					//确保部署的目标目录已经存在，如不存在则创建它
 					Utility.EnsureDirectory(context.DestinationDirectory,
-						Normalize(
+						this.Normalize(
 							section.FullName.Replace(' ', '/'),
-							_variables,
 							variable => _terminal.UndefinedVariable(variable, $"[{section.FullName}]", section.Profile.FilePath, section.LineNumber)
 						)
 					);
 
 					foreach(var child in section.Items)
-						this.DeployItem(child, context);
+						await this.DeployItemAsync(context, child, cancellation);
 
 					break;
 				case ProfileItemType.Entry:
-					this.DeployEntry((ProfileEntry)item, context);
+					await this.DeployEntryAsync(context, (ProfileEntry)item, cancellation);
 					break;
 			}
 		}
 
-		private void DeployEntry(ProfileEntry entry, DeploymentContext context)
+		private async Task DeployEntryAsync(DeploymentContext context, ProfileEntry entry, CancellationToken cancellation)
 		{
-			//获取部署条目的必须条件
-			(var entryName, var entryValue) = Utility.Requisition.GetRequisites(entry, out var requisites);
+			//获取部署项
+			var deployment = DeploymentEntry.Get(context, entry);
 
-			//如果不满足必须条件则忽略该部署条目
-			if(!Utility.Requisition.IsRequisites(_variables, requisites))
+			//如果当前部署项不满足条件则忽略它
+			if(deployment.Ignored(_variables))
 				return;
 
-			var destinationName = string.IsNullOrWhiteSpace(entryValue) ? string.Empty :
-				Normalize(entryValue, _variables, variable => _terminal.UndefinedVariable(variable, entryValue, entry.Profile.FilePath, entry.LineNumber));
-			var destinationDirectory = context.DestinationDirectory;
+			//获取部署项的解析器
+			var resolver = DeploymentResolverManager.GetResolver(deployment.Name);
 
-			if(entry.Section != null)
-				destinationDirectory = Path.Combine(context.DestinationDirectory,
-					Normalize(entry.Section.FullName.Replace(' ', Path.DirectorySeparatorChar), _variables, variable => _terminal.UndefinedVariable(variable, $"[{entry.Section.FullName}]", entry.Profile.FilePath, entry.LineNumber)));
-
-			//以叹号打头的部署条目表示将其对应目标位置的匹配文件删除
-			var deletabled = entryName[0] == '!';
-			var sourcePath = deletabled ? entryName[1..] : entryName;
-
-			sourcePath = Normalize(sourcePath, _variables, variable => _terminal.UndefinedVariable(variable, entryName, entry.Profile.FilePath, entry.LineNumber));
-
-			if(!Path.IsPathRooted(sourcePath))
-				sourcePath = Path.Combine(context.SourceDirectory, sourcePath);
-
-			//由于源路径中可能含有通配符，因此必须查找匹配的文件集
-			foreach(var sourceFile in GetFiles(sourcePath, _variables))
-			{
-				var destinationFile = Path.Combine(GetDestinationDirectory(destinationDirectory, sourceFile.Suffix), string.IsNullOrEmpty(destinationName) ? Path.GetFileName(sourceFile.Path) : destinationName);
-
-				//如果是删除项
-				if(deletabled)
-				{
-					if(DeleteFile(destinationFile))
-					{
-						if(!this.IsQuietMode)
-							_terminal.FileDeletedSucceed(destinationFile);
-					}
-					else
-					{
-						if(!this.IsQuietMode)
-							_terminal.FileDeletedFailed(destinationFile);
-					}
-
-					continue;
-				}
-
-				if(!sourceFile.Exists())
-				{
-					//累加文件复制失败计数器
-					context.Counter.Fail();
-
-					//打印文件不存在的消息（如果是静默模式则不打印提示消息）
-					if(!this.IsQuietMode)
-						_terminal.FileNotExists(sourceFile.Path);
-
-					continue;
-				}
-
-				//如果指定要拷贝的源文件是一个部署文件
-				if(IsDeploymentFile(sourceFile.Path))
-				{
-					//如果没有指定忽略处理子部署文件，则进行子部署文件的递归处理
-					if(!_variables.ContainsKey(IGNOREDEPLOYMENTFILE_OPTION))
-					{
-						var counter = this.Deploy(sourceFile.Path, GetDestinationDirectory(destinationDirectory, sourceFile.Suffix));
-						context.Count(counter);
-						continue;
-					}
-				}
-
-				//获取覆盖选项
-				_variables.TryGetValue(OVERWRITE_OPTION, out var overwrite);
-
-				//执行文件复制
-				if(CopyFile(sourceFile.Path, destinationFile, overwrite))
-					context.Counter.Success();
-				else
-					context.Counter.Fail();
-			}
-
-			static string GetDestinationDirectory(string root, string suffix) => string.IsNullOrEmpty(suffix) ? root : Path.Combine(root, suffix);
+			if(resolver != null)
+				await resolver.ResolveAsync(context, deployment, cancellation);
+			else
+				_terminal.UndefinedResolver(deployment.Name, entry.Name, entry.Profile.FilePath, entry.LineNumber);
 		}
 
-		private static string Normalize(string text, IDictionary<string, string> variables, Action<string> failure)
-		{
-			if(string.IsNullOrWhiteSpace(text))
-				return string.Empty;
-
-			return _variableRegex.Replace(text.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar), match =>
-			{
-				if(match.Success && match.Groups.TryGetValue(REGEX_VARIABLE_NAME, out var group))
-				{
-					if(variables.TryGetValue(group.Value, out var value))
-						return value;
-
-					failure?.Invoke(group.Value);
-				}
-
-				return null;
-			});
-		}
-
-		private static IEnumerable<PathToken> GetFiles(string filePath, IDictionary<string, string> variables)
-		{
-			if(string.IsNullOrEmpty(filePath))
-				yield break;
-
-			var directoryName = Path.GetDirectoryName(filePath);
-			var fileName = Path.GetFileName(filePath);
-
-			if(string.IsNullOrEmpty(fileName))
-				yield break;
-
-			foreach(var directory in GetDirectories(directoryName, variables.ContainsKey(EXPANSION_OPTION)))
-			{
-				//对当前目录路径进行修正和调整
-				if(DirectoryRegulator.Regulate(directory.Path, variables, out var result))
-					directory.Path = result;
-
-				if(fileName.Contains('*') || fileName.Contains('?'))
-				{
-					//如果指定目录不存在则跳过，否则后面的代码会引发系统IO异常
-					if(!Directory.Exists(directory.Path))
-						continue;
-
-					foreach(var file in Directory.GetFiles(directory.Path, fileName))
-						yield return new PathToken(file, directory.Suffix);
-				}
-				else
-				{
-					directory.Combine(fileName);
-					yield return directory;
-				}
-			}
-		}
-
-		private static IEnumerable<PathToken> GetDirectories(string directory, bool expansion)
-		{
-			const int Asterisk1 = 1;
-			const int Asterisk2 = 2;
-
-			if(string.IsNullOrEmpty(directory))
-				return Array.Empty<PathToken>();
-
-			directory = Path.GetFullPath(directory);
-			var parts = Common.StringExtension.Slice(directory, Utility.PATH_SEPARATORS).ToArray();
-			List<PathToken> directories = null;
-			var flags = 0;
-
-			for(int i = 0; i < parts.Length; i++)
-			{
-				if(parts[i] == "**")
-				{
-					if(directories == null)
-						directories = new List<PathToken>();
-
-					flags |= Asterisk2;
-					var origin = Path.Combine(parts.Take(i).ToArray());
-
-					//如果指定目录不存在则跳过，否则后面的代码会引发系统IO异常
-					if(!Directory.Exists(origin))
-						continue;
-
-					directories.AddRange(Directory.GetDirectories(origin, "*", SearchOption.AllDirectories).Select(p => PathToken.Create(p, origin)));
-				}
-				else if(parts[i].Contains('*') || parts.Contains("?"))
-				{
-					if(directories == null)
-						directories = new List<PathToken>();
-
-					flags |= Asterisk1;
-					var origin = Path.Combine(parts.Take(i).ToArray());
-
-					//如果指定目录不存在则跳过，否则后面的代码会引发系统IO异常
-					if(!Directory.Exists(origin))
-						continue;
-
-					directories.AddRange(Directory.GetDirectories(origin, parts[i], SearchOption.TopDirectoryOnly).Select(p => PathToken.Create(p, origin)));
-				}
-				else if(directories != null && directories.Count > 0)
-				{
-					if((flags & Asterisk2) == Asterisk2)
-					{
-						for(int j = 0; j < directories.Count; j++)
-						{
-							if(!directories[j].Suffix.EndsWith("/" + parts[i]))
-								directories[j].Deprecate();
-						}
-					}
-					else
-					{
-						for(int j = 0; j < directories.Count; j++)
-						{
-							directories[j].Combine(parts[i]);
-
-							if(expansion)
-								directories[j].AppendSuffix(parts[i]);
-						}
-					}
-				}
-			}
-
-			if(directories == null || directories.Count == 0)
-				return new[] { new PathToken(directory) };
-
-			return directories.Where(token => !string.IsNullOrEmpty(token.Path));
-		}
-
-		private static bool DeleteFile(string filePath)
-		{
-			try
-			{
-				File.Delete(filePath);
-				return true;
-			}
-			catch
-			{
-				return false;
-			}
-		}
-
-		private static bool CopyFile(string source, string destination, string overwrite)
-		{
-			if(string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(destination))
-				return false;
-
-			var copyRequired = true;
-
-			if(File.Exists(destination) && string.Equals(overwrite, "latest", StringComparison.OrdinalIgnoreCase))
-				copyRequired = File.GetLastWriteTime(source) >= File.GetLastWriteTime(destination);
-
-			if(copyRequired)
-			{
-				var directory = Path.GetDirectoryName(destination);
-				if(!Directory.Exists(directory))
-					Directory.CreateDirectory(directory);
-
-				File.Copy(source, destination, true);
-			}
-
-			return copyRequired;
-		}
-
-		internal static bool IsDeploymentFile(string filePath)
-		{
-			if(string.IsNullOrWhiteSpace(filePath))
-				return false;
-
-			//如果指定的文件的扩展名为.deploy，则判断为部署文件
-			return string.Equals(Path.GetExtension(filePath), ".deploy", StringComparison.OrdinalIgnoreCase);
-		}
-
-		private bool IsQuietMode => _variables.TryGetValue(VERBOSITY_OPTION, out var verbosity) && string.Equals(verbosity, "quiet", StringComparison.OrdinalIgnoreCase);
+		private string Normalize(string text, Action<string> failure) => Normalizer.Normalize(text, _variables, failure);
 		#endregion
 
 		#region 嵌套子类

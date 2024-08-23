@@ -24,8 +24,8 @@ It is recommended to define a default deployment file named `.deploy` in the dep
 	- [`/Zongsoft/Framework/Zongsoft.Messaging.Kafka/.deploy`](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Messaging.Kafka/.deploy)
 
 - Deployment destination projects *(hosting projects)*
-	- [`/Zongsoft/Framework/hosting/terminal/.deploy`](https://github.com/Zongsoft/Framework/tree/master/hosting/terminal/.deploy)
-	- [`/Zongsoft/Framework/hosting/web/.deploy`](https://github.com/Zongsoft/Framework/tree/master/hosting/web/.deploy)
+	- [`/Zongsoft/hosting/terminal/.deploy`](https://github.com/Zongsoft/Framework/tree/master/hosting/terminal/.deploy)
+	- [`/Zongsoft/hosting/web/.deploy`](https://github.com/Zongsoft/Framework/tree/master/hosting/web/.deploy)
 
 
 ## Format Specification
@@ -33,9 +33,6 @@ It is recommended to define a default deployment file named `.deploy` in the dep
 The deployment file is a plain text file in `.ini` format, and its content consists of **Paragraph**(`Section`) and **Entry**(`Entry`) enclosed in square brackets. The **paragraph** part represents the destination directory of deployment, and the **Entry** part represents the source file path to be deployed. The source file path supports three wildcard matching: `*`, `?` and `**`.
 
 **Paragraph** and **Entry** values both support variable references in the format of dollar sign followed by parentheses `$(...)` or double percent signs `%...%`, the referenced variable is the deployment Option parameters passed in by the command line or environment variables. For the specific effect, please refer to the content of the above deployment file.
-
-**Notice:**
-If an entry starts with a `!` exclamation mark, it means to delete the file specified by the entry in the deployment target location.
 
 ### Variables
 
@@ -51,12 +48,12 @@ The part enclosed by `<` and `>` at the end of the entry is the filter condition
 Multiple conditions are supported. Each condition consists of a variable name and the comparison values, If the variable name starts with `!`, it means that the matching result of the condition is negated; If you are comparing multiple values, separate them with commas. As follows:
 
 ```plaintext
-../.deploy/options/$(cloud)/app.$(environment).option       = web.option    <application>
-../.deploy/options/$(cloud)/app.$(environment).option       = web.option    <!application>
-../.deploy/options/$(cloud)/app.$(environment)-debug.option = web.option    <preview:A,B,C>
-../.deploy/options/$(cloud)/app.$(environment)-debug.option = web.option    <!preview:X,Y,Z>
-../.deploy/options/$(cloud)/app.$(environment)-debug.option = web.option    <application | debug:on>
-../.deploy/options/$(cloud)/app.$(environment)-debug.option = web.option    <!application & !debug:on>
+../.deploy/$(scheme)/options/app.$(environment).option       = web.option    <application>
+../.deploy/$(scheme)/options/app.$(environment).option       = web.option    <!application>
+../.deploy/$(scheme)/options/app.$(environment)-debug.option = web.option    <preview:A,B,C>
+../.deploy/$(scheme)/options/app.$(environment)-debug.option = web.option    <!preview:X,Y,Z>
+../.deploy/$(scheme)/options/app.$(environment)-debug.option = web.option    <application | debug:on>
+../.deploy/$(scheme)/options/app.$(environment)-debug.option = web.option    <!application & !debug:on>
 ```
 
 > 1. `<application>` means that there is a variable named `application` (*Regardless of its content*), then the result is true.

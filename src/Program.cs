@@ -11,7 +11,7 @@
  *
  * The MIT License (MIT)
  * 
- * Copyright (C) 2015-2017 Zongsoft Corporation <http://www.zongsoft.com>
+ * Copyright (C) 2015-2024 Zongsoft Corporation <http://www.zongsoft.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,8 @@
 
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Common;
 using Zongsoft.Services;
@@ -41,9 +43,7 @@ namespace Zongsoft.Tools.Deployer
 {
 	internal class Program
 	{
-		const string DEFAULT_DEPLOYMENT_FILENAME = ".deploy";
-
-		public static void Main(string[] args)
+		public static async Task Main(string[] args)
 		{
 			try
 			{
@@ -55,7 +55,7 @@ namespace Zongsoft.Tools.Deployer
 					return;
 
 				//创建一个部署文件路径的列表
-				var paths = expression.Arguments.Length > 0 ? expression.Arguments : new[] { DEFAULT_DEPLOYMENT_FILENAME };
+				var paths = expression.Arguments.Length > 0 ? expression.Arguments : new[] { Deployer.DEFAULT_DEPLOYMENT_FILENAME };
 
 				//创建部署器类的实例
 				var deployer = new Deployer(Zongsoft.Terminals.ConsoleTerminal.Instance, expression.Options);
@@ -64,10 +64,10 @@ namespace Zongsoft.Tools.Deployer
 				for(int i = 0; i < paths.Length; i++)
 				{
 					//部署指定的文件
-					var counter = deployer.Deploy(paths[i]);
+					var counter = await deployer.DeployAsync(paths[i]);
 
 					//打印部署的结果信息
-					deployer.Terminal.CompleteDeployment(Path.GetFullPath(paths[i]), counter, i >= paths.Length - 1);
+					deployer.Terminal.CompleteDeployment(counter.FilePath, counter, i >= paths.Length - 1);
 				}
 			}
 			catch(Terminals.TerminalCommandExecutor.ExitException ex)
@@ -100,7 +100,7 @@ namespace Zongsoft.Tools.Deployer
 		private static bool HasDefaultDeploymentFile()
 		{
 			//判断当前目录下是否存在默认部署文件，如果不存在则打印错误信息并退出
-			if(File.Exists(Path.Combine(Environment.CurrentDirectory, DEFAULT_DEPLOYMENT_FILENAME)))
+			if(File.Exists(Path.Combine(Environment.CurrentDirectory, Deployer.DEFAULT_DEPLOYMENT_FILENAME)))
 				return true;
 
 			Console.ForegroundColor = ConsoleColor.DarkRed;

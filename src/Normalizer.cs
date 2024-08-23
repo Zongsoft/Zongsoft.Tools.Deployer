@@ -11,7 +11,7 @@
  *
  * The MIT License (MIT)
  * 
- * Copyright (C) 2015-2017 Zongsoft Corporation <http://www.zongsoft.com>
+ * Copyright (C) 2015-2024 Zongsoft Corporation <http://www.zongsoft.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,53 +32,39 @@
  */
 
 using System;
+using System.IO;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Zongsoft.Tools.Deployer
 {
-	public class DeploymentCounter
+	public static class Normalizer
 	{
-		#region 成员字段
-		private int _failures;
-		private int _successes;
-		private readonly string _filePath;
+		#region 常量定义
+		//变量解析的正则组名称
+		private const string REGEX_VARIABLE_NAME = "name";
+		//变量解析的正则表达式（变量包括两种语法：$(variable) 或 %variable%）
+		private static readonly Regex _variableRegex = new(@"(?<opt>\$\((?<name>\w+)\))|(?<env>\%(?<name>\w+)\%)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
 		#endregion
 
-		#region 构造函数
-		public DeploymentCounter(string filePath) => _filePath = filePath;
-		public DeploymentCounter(string filePath, int failures, int successes)
+		#region 公共方法
+		public static string Normalize(string text, IDictionary<string, string> variables, Action<string> failure)
 		{
-			_filePath = filePath;
-			_failures = failures;
-			_successes = successes;
-		}
-		#endregion
+			if(string.IsNullOrWhiteSpace(text))
+				return string.Empty;
 
-		#region 公共属性
-		public string FilePath => _filePath;
-		public int Total => _failures + _successes;
-		public int Failures => _failures;
-		public int Successes => _successes;
-		#endregion
+			return _variableRegex.Replace(text.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar), match =>
+			{
+				if(match.Success && match.Groups.TryGetValue(REGEX_VARIABLE_NAME, out var group))
+				{
+					if(variables.TryGetValue(group.Value, out var value))
+						return value;
 
-		#region 内部方法
-		internal int Fail(int interval = 1)
-		{
-			int result = 0;
+					failure?.Invoke(group.Value);
+				}
 
-			for(int i = 0; i < interval; i++)
-				result = System.Threading.Interlocked.Increment(ref _failures);
-
-			return result;
-		}
-
-		internal int Success(int interval = 1)
-		{
-			int result = 0;
-
-			for(int i = 0; i < interval; i++)
-				result = System.Threading.Interlocked.Increment(ref _successes);
-
-			return result;
+				return null;
+			});
 		}
 		#endregion
 	}

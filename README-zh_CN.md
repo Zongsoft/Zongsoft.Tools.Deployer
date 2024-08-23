@@ -25,8 +25,8 @@ README: [English](https://github.com/Zongsoft/Zongsoft.Tools.Deployer/blob/maste
 	- [`/Zongsoft/Framework/Zongsoft.Messaging.Kafka/.deploy`](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Messaging.Kafka/.deploy)
 
 - 部署目标 *(宿主项目)*
-	- [`/Zongsoft/Framework/hosting/terminal/.deploy`](https://github.com/Zongsoft/Framework/tree/master/hosting/terminal/.deploy)
-	- [`/Zongsoft/Framework/hosting/web/.deploy`](https://github.com/Zongsoft/Framework/tree/master/hosting/web/.deploy)
+	- [`/Zongsoft/hosting/terminal/.deploy`](https://github.com/Zongsoft/Framework/tree/master/hosting/terminal/.deploy)
+	- [`/Zongsoft/hosting/web/.deploy`](https://github.com/Zongsoft/Framework/tree/master/hosting/web/.deploy)
 
 
 ## 格式
@@ -34,9 +34,6 @@ README: [English](https://github.com/Zongsoft/Zongsoft.Tools.Deployer/blob/maste
 部署文件为 `.ini` 格式的纯文本文件，其内容由中括号包裹的**段落**(`Section`)和**条目**(`Entry`) 两种内容组成。其中**段落**部分表示部署的目标目录，而**条目**部分表示待部署的源文件路径，源文件路径支持 `*`、`?` 以及 `**` 三种通配符匹配。
 
 **段落**和**条目**值均支持以美元符接圆括号 `$(...)` 或双百分号 `%...%` 格式的变量引用，引用的变量为部署命令传入的选项参数或环境变量，具体效果请参考上述部署文件内容。
-
-**注意：**
-如果条目以 `!` 叹号打头，则表示删除部署目标位置的该条目所指定的文件。
 
 ### 变量
 
@@ -52,12 +49,12 @@ README: [English](https://github.com/Zongsoft/Zongsoft.Tools.Deployer/blob/maste
 支持多个条件组合，每个条件由变量名和比较值组成，变量名若以 `!` 打头则表示对该条件的匹配结果取反；如果要比对多个值则以逗号分隔。如下所示：
 
 ```plaintext
-../.deploy/options/$(cloud)/app.$(environment).option       = web.option    <application>
-../.deploy/options/$(cloud)/app.$(environment).option       = web.option    <!application>
-../.deploy/options/$(cloud)/app.$(environment)-debug.option = web.option    <preview:A,B,C>
-../.deploy/options/$(cloud)/app.$(environment)-debug.option = web.option    <!preview:X,Y,Z>
-../.deploy/options/$(cloud)/app.$(environment)-debug.option = web.option    <application | debug:on>
-../.deploy/options/$(cloud)/app.$(environment)-debug.option = web.option    <!application & !debug:on>
+../.deploy/$(scheme)/options/app.$(environment).option       = web.option    <application>
+../.deploy/$(scheme)/options/app.$(environment).option       = web.option    <!application>
+../.deploy/$(scheme)/options/app.$(environment)-debug.option = web.option    <preview:A,B,C>
+../.deploy/$(scheme)/options/app.$(environment)-debug.option = web.option    <!preview:X,Y,Z>
+../.deploy/$(scheme)/options/app.$(environment)-debug.option = web.option    <application | debug:on>
+../.deploy/$(scheme)/options/app.$(environment)-debug.option = web.option    <!application & !debug:on>
 ```
 
 > 1. `<application>` 表示存在名为 `application` 的变量(*不论其内容*)，则结果为真。

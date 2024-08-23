@@ -11,7 +11,7 @@
  *
  * The MIT License (MIT)
  * 
- * Copyright (C) 2015-2017 Zongsoft Corporation <http://www.zongsoft.com>
+ * Copyright (C) 2015-2024 Zongsoft Corporation <http://www.zongsoft.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,53 +33,38 @@
 
 using System;
 
+using Zongsoft.Services;
+using Zongsoft.Terminals;
+
 namespace Zongsoft.Tools.Deployer
 {
-	public class DeploymentCounter
+	internal static class NugetOutput
 	{
-		#region 成员字段
-		private int _failures;
-		private int _successes;
-		private readonly string _filePath;
-		#endregion
-
-		#region 构造函数
-		public DeploymentCounter(string filePath) => _filePath = filePath;
-		public DeploymentCounter(string filePath, int failures, int successes)
+		public static void IllegalArgument(this ITerminal terminal, string argument, string filePath, int lineNumber = -1)
 		{
-			_filePath = filePath;
-			_failures = failures;
-			_successes = successes;
-		}
-		#endregion
+			if(lineNumber >= 0)
+				filePath = $"{filePath} (#{lineNumber})";
 
-		#region 公共属性
-		public string FilePath => _filePath;
-		public int Total => _failures + _successes;
-		public int Failures => _failures;
-		public int Successes => _successes;
-		#endregion
-
-		#region 内部方法
-		internal int Fail(int interval = 1)
-		{
-			int result = 0;
-
-			for(int i = 0; i < interval; i++)
-				result = System.Threading.Interlocked.Increment(ref _failures);
-
-			return result;
+			terminal.Write(CommandOutletColor.Red, Properties.Resources.Error_Prompt);
+			terminal.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.NuGet_IllegalArgument_Message, argument, filePath));
 		}
 
-		internal int Success(int interval = 1)
+		public static void NotFound(this ITerminal terminal, string package, string version)
 		{
-			int result = 0;
+			if(string.IsNullOrEmpty(version))
+				version = Properties.Resources.Latest;
 
-			for(int i = 0; i < interval; i++)
-				result = System.Threading.Interlocked.Increment(ref _successes);
-
-			return result;
+			terminal.Write(CommandOutletColor.Red, Properties.Resources.Error_Prompt);
+			terminal.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.NuGet_NotFound_Message, package, version));
 		}
-		#endregion
+
+		public static void DownloadFailed(this ITerminal terminal, string package, string version)
+		{
+			if(string.IsNullOrEmpty(version))
+				version = Properties.Resources.Latest;
+
+			terminal.Write(CommandOutletColor.Red, Properties.Resources.Error_Prompt);
+			terminal.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.NuGet_DownloadFailed_Message, package, version));
+		}
 	}
 }
