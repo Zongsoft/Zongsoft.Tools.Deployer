@@ -91,7 +91,7 @@ namespace Zongsoft.Tools.Deployer
 		#region 私有方法
 		private static async Task<NuGetVersion> GetPackageVersionAsync(IDictionary<string, string> variables, string name, string version, CancellationToken cancellation)
 		{
-			using var cache = new SourceCacheContext();
+			using var cache = new SourceCacheContext() { NoCache = true };
 			var repository = GetRepository(variables);
 			var resource = repository.GetResource<FindPackageByIdResource>();
 			var versions = await resource.GetAllVersionsAsync(name, cache, NullLogger.Instance, cancellation);
