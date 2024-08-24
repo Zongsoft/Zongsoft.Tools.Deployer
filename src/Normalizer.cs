@@ -48,7 +48,7 @@ namespace Zongsoft.Tools.Deployer
 		#endregion
 
 		#region 公共方法
-		public static string Normalize(string text, IDictionary<string, string> variables, Action<string> failure)
+		public static string Normalize(string text, IDictionary<string, string> variables, Action<string> failure = null)
 		{
 			if(string.IsNullOrWhiteSpace(text))
 				return string.Empty;

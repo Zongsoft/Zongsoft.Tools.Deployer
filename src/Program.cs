@@ -60,6 +60,9 @@ namespace Zongsoft.Tools.Deployer
 				//创建部署器类的实例
 				var deployer = new Deployer(Zongsoft.Terminals.ConsoleTerminal.Instance, expression.Options);
 
+				//打印开始部署信息
+				deployer.StartDeployment(expression, paths);
+
 				//依次部署指定的部署文件
 				for(int i = 0; i < paths.Length; i++)
 				{

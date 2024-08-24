@@ -42,9 +42,9 @@ namespace Zongsoft.Tools.Deployer
 		#region 常量定义
 		private const string NUGET_SERVER_URL = @"https://api.nuget.org/v3/index.json";
 
-		private const string NUGET_SERVER_ENVIRONMENT = "nuget.server";
-		private const string USERPROFILE_ENVIRONMENT = "USERPROFILE";
-		private const string NUGET_PACKAGES_ENVIRONMENT = "NUGET_PACKAGES";
+		internal const string USERPROFILE_ENVIRONMENT = "USERPROFILE";
+		internal const string NUGET_SERVER_ENVIRONMENT = "NuGet_Server";
+		internal const string NUGET_PACKAGES_ENVIRONMENT = "NuGet_Packages";
 		#endregion
 
 		#region 静态属性

@@ -32,6 +32,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 using Zongsoft.Services;
 using Zongsoft.Terminals;
@@ -116,6 +117,72 @@ namespace Zongsoft.Tools.Deployer
 				terminal.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.ResolverUndefined_Message, resolver, expression));
 			else
 				terminal.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.ResolverUndefinedInFile_Message, resolver, expression, filePath));
+		}
+
+		public static void StartDeployment(this Deployer deployer, CommandExpression expression, string[] filePaths)
+		{
+			const string splash = @"
+     _____                                ___ __
+    /_   /  ____  ____  ____  ____ ____  / __/ /_
+      / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
+     / /__/ /_/ / / / / /_/ /\_ \/ /_/ / __/ /_
+    /____/\____/_/ /_/\__  /____/\____/_/  \__/
+                     /____/
+";
+
+			deployer.Terminal.WriteLine(splash);
+
+			var content = CommandOutletContent
+				.Create(CommandOutletColor.DarkMagenta, Properties.Resources.Deployment_List_Label)
+				.AppendLine();
+
+			for(int i = 0; i < filePaths.Length; i++)
+			{
+				content.Append(CommandOutletColor.DarkGray, $"\t[");
+				content.Append(CommandOutletColor.DarkYellow, $"{i + 1}");
+				content.Append(CommandOutletColor.DarkGray, $"] ");
+				content.AppendLine(CommandOutletColor.DarkGreen, Normalizer.Normalize(filePaths[i], deployer.Variables));
+			}
+
+			content.AppendLine(CommandOutletColor.DarkMagenta, Properties.Resources.Deployment_Options_Label);
+
+			foreach(var option in expression.Options)
+			{
+				content.Append(CommandOutletColor.DarkCyan, $"\t{option.Key}");
+				content.Append(CommandOutletColor.DarkGray, ":");
+				content.AppendLine(CommandOutletColor.DarkGreen, Normalizer.Normalize(option.Value, deployer.Variables));
+			}
+
+			IDictionary<string, string> variables;
+
+			if(deployer.IsVerbosity(Verbosity.Detailed))
+			{
+				variables = deployer.Variables;
+			}
+			else
+			{
+				variables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+				if(deployer.Variables.TryGetValue("application", out var value))
+					variables["application"] = value;
+				if(deployer.Variables.TryGetValue("environment", out value))
+					variables["environment"] = value;
+				if(deployer.Variables.TryGetValue(NugetUtility.NUGET_SERVER_ENVIRONMENT, out value))
+					variables[NugetUtility.NUGET_SERVER_ENVIRONMENT] = value;
+				if(deployer.Variables.TryGetValue(NugetUtility.NUGET_PACKAGES_ENVIRONMENT, out value))
+					variables[NugetUtility.NUGET_PACKAGES_ENVIRONMENT] = value;
+			}
+
+			content.AppendLine(CommandOutletColor.DarkMagenta, Properties.Resources.Environment_Variables_Label);
+
+			foreach(var variable in variables)
+			{
+				content.Append(CommandOutletColor.DarkCyan, $"\t{variable.Key}");
+				content.Append(CommandOutletColor.DarkGray, ":");
+				content.AppendLine(CommandOutletColor.DarkGreen, variable.Value);
+			}
+
+			deployer.Terminal.WriteLine(content);
 		}
 
 		public static void CompleteDeployment(this ITerminal terminal, string filePath, DeploymentCounter counter, bool final)

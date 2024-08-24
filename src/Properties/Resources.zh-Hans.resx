@@ -208,4 +208,13 @@
     <value>{0} 文件部署到
 　　　{1} 失败(overwrite={2})。注：因为目标文件已经存在。</value>
   </data>
+  <data name="Deployment.List.Label" xml:space="preserve">
+    <value>部署文件：</value>
+  </data>
+  <data name="Deployment.Options.Label" xml:space="preserve">
+    <value>部署选项：</value>
+  </data>
+  <data name="Environment.Variables.Label" xml:space="preserve">
+    <value>环境变量：</value>
+  </data>
 </root>

@@ -91,7 +91,7 @@ namespace Zongsoft.Tools.Deployer
 				{
 					context.Counter.Success();
 
-					if(context.IsVerbosity(Verbosity.Normal, Verbosity.Detailed))
+					if(context.IsVerbosity(Verbosity.Detailed))
 						context.Deployer.Terminal.FileDeploySucceed(sourceFile.Path, destinationFile);
 				}
 				else

@@ -65,6 +65,10 @@ namespace Zongsoft.Tools.Deployer
 			_terminal = terminal ?? throw new ArgumentNullException(nameof(terminal));
 			_variables = Collections.DictionaryExtension.ToDictionary<string, string>(Environment.GetEnvironmentVariables(), StringComparer.OrdinalIgnoreCase);
 
+			//设置选项的默认值
+			_variables.TryAdd(OVERWRITE_OPTION, Overwrite.Newest.ToString());
+			_variables.TryAdd(VERBOSITY_OPTION, Verbosity.Normal.ToString());
+
 			//将部署目录中的 appsettings.json 文件内容解析后加载到变量集
 			AppSettingsUtility.Load(_variables);
 			//初始化 Nuget 相关的变量

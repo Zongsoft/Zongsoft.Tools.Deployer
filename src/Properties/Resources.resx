@@ -208,4 +208,13 @@
     <value>The {0} File deployment to
       {1} failed(overwrite={2}). Note: Because the destination file already exists.</value>
   </data>
+  <data name="Deployment.List.Label" xml:space="preserve">
+    <value>Deployment List:</value>
+  </data>
+  <data name="Deployment.Options.Label" xml:space="preserve">
+    <value>Deployment Options:</value>
+  </data>
+  <data name="Environment.Variables.Label" xml:space="preserve">
+    <value>Environment Variables:</value>
+  </data>
 </root>

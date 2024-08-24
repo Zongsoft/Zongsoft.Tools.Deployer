@@ -77,9 +77,13 @@ namespace Zongsoft.Tools.Deployer
 
 		public static bool IsVerbosity(this DeploymentContext context, Verbosity verbosity) =>
 			context.Variables.TryGetValue(Deployer.VERBOSITY_OPTION, out var variable) && Enum.TryParse<Verbosity>(variable, true, out var value) && verbosity == value;
+		public static bool IsVerbosity(this Deployer deployer, Verbosity verbosity) =>
+			deployer.Variables.TryGetValue(Deployer.VERBOSITY_OPTION, out var variable) && Enum.TryParse<Verbosity>(variable, true, out var value) && verbosity == value;
 
 		public static bool IsVerbosity(this DeploymentContext context, params Verbosity[] verbosities) =>
 			context.Variables.TryGetValue(Deployer.VERBOSITY_OPTION, out var variable) && Enum.TryParse<Verbosity>(variable, true, out var value) && verbosities != null && verbosities.Contains(value);
+		public static bool IsVerbosity(this Deployer deployer, params Verbosity[] verbosities) =>
+			deployer.Variables.TryGetValue(Deployer.VERBOSITY_OPTION, out var variable) && Enum.TryParse<Verbosity>(variable, true, out var value) && verbosities != null && verbosities.Contains(value);
 
 		public static bool IsOverwrite(this DeploymentContext context, Overwrite overwrite) =>
 			context.Variables.TryGetValue(Deployer.OVERWRITE_OPTION, out var variable) && Enum.TryParse<Overwrite>(variable, true, out var value) && overwrite == value;

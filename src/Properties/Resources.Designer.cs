@@ -61,6 +61,24 @@ namespace Zongsoft.Tools.Deployer.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Deployment List: 的本地化字符串。
+        /// </summary>
+        internal static string Deployment_List_Label {
+            get {
+                return ResourceManager.GetString("Deployment.List.Label", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Deployment Options: 的本地化字符串。
+        /// </summary>
+        internal static string Deployment_Options_Label {
+            get {
+                return ResourceManager.GetString("Deployment.Options.Label", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 ( 的本地化字符串。
         /// </summary>
         internal static string DeploymentComplete_CountBegin {
@@ -129,6 +147,15 @@ namespace Zongsoft.Tools.Deployer.Properties {
         internal static string DirectoryNotExists_Message {
             get {
                 return ResourceManager.GetString("DirectoryNotExists.Message", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Environment Variables: 的本地化字符串。
+        /// </summary>
+        internal static string Environment_Variables_Label {
+            get {
+                return ResourceManager.GetString("Environment.Variables.Label", resourceCulture);
             }
         }
         

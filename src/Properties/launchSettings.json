@@ -2,7 +2,7 @@
   "profiles": {
     "Zongsoft.Tools.Deployer": {
       "commandName": "Project",
-      "commandLineArgs": " -verbosity:normal     \r\n -overwrite:newest    \r\n -site:daemon         \r\n -scheme:%scheme%     \r\n -cloud:aliyun        \r\n -edition:Debug       \r\n -debug:%debug%       \r\n -framework:net8.0    \r\n -destination:bin/%edition%/%framework%\r\n .deploy\r\n ../.deploy/%scheme%/%site%.deploy\r\n",
+      "commandLineArgs": "-verbosity:normal\r\n-overwrite:newest\r\n-site:daemon\r\n-scheme:%scheme%\r\n-cloud:aliyun\r\n-edition:Debug\r\n-debug:%debug%\r\n-framework:net8.0\r\n-destination:bin/%edition%/%framework%\r\n.deploy\r\n../.deploy/%scheme%/%site%.deploy",
       "workingDirectory": "D:\\Zongsoft\\hosting\\terminal",
       "environmentVariables": {
         "scheme": "default",
