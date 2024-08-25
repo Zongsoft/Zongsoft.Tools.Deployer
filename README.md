@@ -197,12 +197,12 @@ When the `mysql.data` in the Nuget package directory contains the `net7.0` targe
 ### Reference examples
 
 - The NuGet Packages
-	- [`Zongsoft.Data`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/src/Zongsoft.Data.deploy)
-	- [`Zongsoft.Data.MySql`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/drivers/mysql/Zongsoft.Data.MySql.deploy)
-	- [`Zongsoft.Security`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Security/src/Zongsoft.Security.deploy)
-	- [`Zongsoft.Security.Web`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Security/api/Zongsoft.Security.Web.deploy)
-	- [`Zongsoft.Administratives`](https://github.com/Zongsoft/Administratives/blob/master/src/Zongsoft.Administratives.deploy)
-	- [`Zongsoft.Administratives.Web`](https://github.com/Zongsoft/Administratives/blob/master/src/api/Zongsoft.Administratives.Web.deploy)
+	- [`Zongsoft.Data`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/src/Zongsoft.Data.deploy) [(NuGet)](https://www.nuget.org/packages/Zongsoft.Data)
+	- [`Zongsoft.Data.MySql`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/drivers/mysql/Zongsoft.Data.MySql.deploy) [(NuGet)](https://www.nuget.org/packages/Zongsoft.Data.MySql)
+	- [`Zongsoft.Security`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Security/src/Zongsoft.Security.deploy) [(NuGet)](https://www.nuget.org/packages/Zongsoft.Security)
+	- [`Zongsoft.Security.Web`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Security/api/Zongsoft.Security.Web.deploy) [(NuGet)](https://www.nuget.org/packages/Zongsoft.Security.Web)
+	- [`Zongsoft.Administratives`](https://github.com/Zongsoft/Administratives/blob/master/src/Zongsoft.Administratives.deploy) [(NuGet)](https://www.nuget.org/packages/Zongsoft.Administratives)
+	- [`Zongsoft.Administratives.Web`](https://github.com/Zongsoft/Administratives/blob/master/src/api/Zongsoft.Administratives.Web.deploy) [(NuGet)](https://www.nuget.org/packages/Zongsoft.Administratives.Web)
 
 - The hosting projects
 	- [`daemon`](https://github.com/Zongsoft/hosting/blob/main/daemon/.deploy)

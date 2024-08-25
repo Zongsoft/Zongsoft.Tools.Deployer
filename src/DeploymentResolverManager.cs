@@ -74,7 +74,7 @@ namespace Zongsoft.Tools.Deployer
 
 				if(DeleteFile(filePath))
 				{
-					if(context.IsVerbosity(Verbosity.Detailed))
+					if(context.IsVerbosity(Verbosity.Detail))
 						context.Deployer.Terminal.FileDeletedSucceed(filePath);
 				}
 				else

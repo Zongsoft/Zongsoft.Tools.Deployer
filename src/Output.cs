@@ -58,7 +58,7 @@ namespace Zongsoft.Tools.Deployer
 			var message = overwrite switch
 			{
 				Overwrite.Never => string.Format(Properties.Resources.FileDeployFailed_Never_Message, source, destination, overwrite),
-				Overwrite.Newer or Overwrite.Newest => string.Format(Properties.Resources.FileDeployFailed_Newer_Message, source, destination, overwrite),
+				Overwrite.Newest => string.Format(Properties.Resources.FileDeployFailed_Newer_Message, source, destination, overwrite),
 				_ => string.Format(Properties.Resources.FileDeployFailed_Message, source, destination),
 			};
 
@@ -155,7 +155,7 @@ namespace Zongsoft.Tools.Deployer
 
 			IDictionary<string, string> variables;
 
-			if(deployer.IsVerbosity(Verbosity.Detailed))
+			if(deployer.IsVerbosity(Verbosity.Detail))
 			{
 				variables = deployer.Variables;
 			}

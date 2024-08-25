@@ -45,8 +45,6 @@ namespace Zongsoft.Tools.Deployer
 		/// <summary>不覆盖</summary>
 		Never = 1,
 		/// <summary>如果较新，则覆盖</summary>
-		Newer = 2,
-		/// <summary>如果较新，则覆盖</summary>
 		Newest = 2,
 	}
 }

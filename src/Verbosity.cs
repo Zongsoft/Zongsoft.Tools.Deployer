@@ -45,6 +45,6 @@ namespace Zongsoft.Tools.Deployer
 		/// <summary>普通模式</summary>
 		Normal,
 		/// <summary>详细模式</summary>
-		Detailed,
+		Detail,
 	}
 }

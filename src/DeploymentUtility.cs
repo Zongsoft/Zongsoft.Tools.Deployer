@@ -159,7 +159,7 @@ namespace Zongsoft.Tools.Deployer
 				{
 					Overwrite.Alway => true,
 					Overwrite.Never => false,
-					Overwrite.Newer or Overwrite.Newest => File.GetLastWriteTime(source) >= File.GetLastWriteTime(destination),
+					Overwrite.Newest => File.GetLastWriteTime(source) >= File.GetLastWriteTime(destination),
 					_ => true,
 				};
 			}
