@@ -12,40 +12,79 @@ This is an application deployment tool that instructs the deployment tool to cop
 
 It is recommended to define a default deployment file named `.deploy` in the deployment project directory, and the deployment file is a plain text file in `.ini` format.
 
-### Reference examples
-
-- Deployment source projects
-	- [`/Zongsoft/Framework/Zongsoft.Data/.deploy`](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Data/.deploy)
-	- [`/Zongsoft/Framework/Zongsoft.Data/drivers/mssql/.deploy`](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Data/drivers/mssql/.deploy)
-	- [`/Zongsoft/Framework/Zongsoft.Data/drivers/mysql/.deploy`](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Data/drivers/mysql/.deploy)
-	- [`/Zongsoft/Framework/Zongsoft.Security/.deploy`](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Security/.deploy)
-	- [`/Zongsoft/Framework/Zongsoft.Security/api/.deploy`](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Security/api/.deploy)
-	- [`/Zongsoft/Framework/Zongsoft.Messaging.Mqtt/.deploy`](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Messaging.Mqtt/.deploy)
-	- [`/Zongsoft/Framework/Zongsoft.Messaging.Kafka/.deploy`](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Messaging.Kafka/.deploy)
-
-- Deployment destination projects *(hosting projects)*
-	- [`/Zongsoft/hosting/terminal/.deploy`](https://github.com/Zongsoft/Framework/tree/master/hosting/terminal/.deploy)
-	- [`/Zongsoft/hosting/web/.deploy`](https://github.com/Zongsoft/Framework/tree/master/hosting/web/.deploy)
-
-
 ## Format Specification
 
-The deployment file is a plain text file in `.ini` format, and its content consists of **Paragraph**(`Section`) and **Entry**(`Entry`) enclosed in square brackets. The **paragraph** part represents the destination directory of deployment, and the **Entry** part represents the source file path to be deployed. The source file path supports three wildcard matching: `*`, `?` and `**`.
+The deployment file is a plain text file in `.ini` format, and its content consists of **Section**(`Paragraph`) and **Entry**(`Entry`) enclosed in square brackets, the **Section** part represents the destination directory of deployment.
 
-**Paragraph** and **Entry** values both support variable references in the format of dollar sign followed by parentheses `$(...)` or double percent signs `%...%`, the referenced variable is the deployment Option parameters passed in by the command line or environment variables. For the specific effect, please refer to the content of the above deployment file.
+The **Section** and **Entry** values both support variable references in the format of dollar sign followed by parentheses `$(...)` or double percent signs `%...%`, the referenced variable is the deployment options passed in by the command line or environment variables.
 
-### Variables
+Each entry consists of **KEY** and **VALUE** parts separated by an equal sign _(`=`)_, and the **VALUE** part is optional.
 
-This tool will sequentially load the environment variables, the contents of the `appsettings.json` file of the deployed application, and the command options for calling this tool into the variable set. If the variable has the same name, the value loaded later will overwrite the value of the variable with the same name loaded before. **Note:** Variable names are not case sensitive.
+- The **KEY** part consists of _Parser-Name_ and _Parser-Argument_, separated by a colon _(`:`)_;
+	- **_Parser-Name_**: If missing, the default path parser is used, except for `nuget` and `delete` parsers.
+	- **_Parser-Argument_**: Parsed by the specified parser, please refer to _**P**arser **A**rgument_ below for details.
 
-- If a property named `ApplicationName` is defined in `appsettings.json`, you can use `application` as a variable alias for that property.
-- The variable named `Framework` represents the .NET *TargetFramework* identity, which is defined in https://learn.microsoft.com/en-us/dotnet/standard/frameworks
+- The **VALUE** part consists of _Destination_ and _Filtering_.
+	- **_Destination_**: Indicates the destination path for deployment. If missing, the destination directory is specified by the **Section**, and the destination file name is the same as the source file.
+	- **_Filtering_**: Indicates the preconditions for parsing, please refer to _**F**iltering_ below for details.
 
-NuGet-related parameters can be specified via command options or environment variables:
-- `NuGet_Server` indicates the NuGet server information, the default value is: `https://api.nuget.org/v3/index.json`.
-- `NuGet_Packages` indicates the directory of NuGet packages, the default value is: `%USERPROFILE%/.nuget/packages`.
+### Parser Argument
 
-### filtering
+#### Path Parser
+
+Default parser(_**U**nnamed_), which means copy the source file indicated by the _Parser-Argument_ to the destination location.
+
+The _Parser-Argument_ represents the path of the source file to be deployed, the source file path supports `*`, `?` and `**` wildcards, the `**` means multi-level directory matching.
+
+#### Delete Parser
+
+The parser name is `delete` or `remove`, which means delete the specified destination file.
+
+The _Parser-Argument_ represents the destination file to be deleted, and the full path of the destination file is a combination of the directory specified in the **Section** and the _Parser-Argument_.
+
+> 🚨 **Note:** This parser does not support the _Destination_ part, so this part cannot be defined.
+
+##### Examples
+
+Delete the `Zongsoft.Messaging.Mqtt.option` file from the `~/plugins/zongsoft/messaging/mqtt` directory in the target location.
+
+```ini
+[plugins zongsoft messaging mqtt]
+nuget:Zongsoft.Messaging.Mqtt
+delete:Zongsoft.Messaging.Mqtt.option
+```
+
+> 💡 **Tip:** The deployment file in the `nuget:Zongsoft.Messaging.Mqtt` package in the example contains a default configuration file(i.e. `Zongsoft.Messaging.Mqtt.option`), but it is not needed in the real project, so the configuration file is removed later.
+
+#### NuGet Parser
+
+The parser name is: `nuget`, which means download the NuGet package and perform the deployment.
+
+The format of _Parser-Argument_: `package@version/path`, where `@version` and `/{path}` parts are optional. If the version part is unspecified or it is `latest`, it means the latest version. If the path part is unspecified, it defaults to the `.deploy` file in the package.
+
+> 💡 **Tip:** _**Z**ongsoft_'s NuGet package has a deployment file named `.deploy` in it's root directory, and the `artifacts` directory in the package includes its plugin files(`*.plugin`)_(required, one or more)_, configuration files(`*.option`), the mapping files(`*.mapping`) for [_**Z**ongsoft.**D**ata_ ORM](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Data), and other ancillary files.
+
+> 💡 **Note:** The variable named `NuGet_Server` defines the NuGet package source for this parser.
+> If undefined then `https://api.nuget.org/v3/index.json` is used as its default value.
+
+##### Examples
+
+- Get the latest version of the `Zongsoft.Plugins` NuGet package and deploy the `Main.plugin` plugin file in it's `/plugins` directory to the destination `~/plugins` directory.
+	> ```ini
+	> [plugins]
+	> nuget:Zongsoft.Plugins/plugins/Main.plugin
+	> ```
+
+- Get the `6.0.0` version of the `Zongsoft.Data` NuGet package and execute the `.deploy` deployment file in the package.
+	> ```ini
+	> [plugins zongsoft data]
+	> nuget:Zongsoft.Data@6.0.0
+	> [plugins zongsoft data]
+	> nuget:Zongsoft.Data@6.0.0/.deploy
+	> ```
+	> **Note:** The above two writing styles have the same effect.
+
+### Filtering
 
 The part enclosed by `<` and `>` at the end of the entry is the filter condition, and entries that do not meet the filter criteria will be ignored.
 
@@ -74,29 +113,43 @@ Supports matching and version comparison of *TargetFramework*. If *TargetFramewo
 %NUGET_PACKAGES%/mysql.data/6.10.9/lib/netstandard2.0/*.dll    <framework:net5.0,net6.0>
 ```
 
-## The tool setup
+## Variables
+
+This tool will sequentially load the environment variables, the contents of the `appsettings.json` file of the deployed application, and the command options for calling this tool into the variable set. If the variable has the same name, the value loaded later will overwrite the value of the variable with the same name loaded before. **Note:** Variable names are not case sensitive.
+
+- If a property named `ApplicationName` is defined in `appsettings.json`, you can use `application` as a variable alias for that property.
+- The variable named `Framework` represents the .NET *TargetFramework* identity, which is defined in https://learn.microsoft.com/en-us/dotnet/standard/frameworks
+
+NuGet-related parameters can be specified via command options or environment variables:
+- `NuGet_Server` indicates the NuGet server information, the default value is: `https://api.nuget.org/v3/index.json`.
+- `NuGet_Packages` indicates the directory of NuGet packages, the default value is: `%USERPROFILE%/.nuget/packages`.
+
+## Setup
 
 - List tools
+
 ```bash
 dotnet tool list
 dotnet tool list -g
 ```
 
 - Install tool
+
 ```bash
-dotnet tool install zongsoft.tools.deployer -g
+dotnet tool install -g zongsoft.tools.deployer
 ```
 
 - Upgrade tool
+
 ```bash
-dotnet tool update zongsoft.tools.deployer -g
+dotnet tool update -g zongsoft.tools.deployer
 ```
 
 - Uninstall tool
-```bash
-dotnet tool uninstall zongsoft.tools.deployer -g
-```
 
+```bash
+dotnet tool uninstall -g zongsoft.tools.deployer
+```
 
 ## Deploy
 
@@ -121,7 +174,7 @@ dotnet deploy -edition:Debug -framework:net7.0 MyProject1.deploy MyProject2.depl
 - `verbosity` option
 	- `quiet` Displays only the necessary output information, usually only error messages.
 	- `normal` Displays warning and error messages, if this command option is not specified, it is the default.
-	- `detailed` Displays all output messages, this option can be enabled when troubleshooting.
+	- `detail` Displays all output messages, this option can be enabled when troubleshooting.
 - `overwrite` option
 	- `alway` Always copy and overwrite the destination file.
 	- `never` Copies the destination file only if it does not exist.
@@ -138,3 +191,20 @@ Assuming `Framework` variable is `net7.0`, when a deployment file has the follow
 ```
 
 When the `mysql.data` in the Nuget package directory contains the `net7.0` target framework version, use the library files of the target framework version, otherwise use the library files of the `netstandard2.1` target framework version specified in the deployment entry.
+
+## Others
+
+### Reference examples
+
+- The NuGet Packages
+	- [`Zongsoft.Data`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/src/Zongsoft.Data.deploy)
+	- [`Zongsoft.Data.MySql`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/drivers/mysql/Zongsoft.Data.MySql.deploy)
+	- [`Zongsoft.Security`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Security/src/Zongsoft.Security.deploy)
+	- [`Zongsoft.Security.Web`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Security/api/Zongsoft.Security.Web.deploy)
+	- [`Zongsoft.Administratives`](https://github.com/Zongsoft/Administratives/blob/master/src/Zongsoft.Administratives.deploy)
+	- [`Zongsoft.Administratives.Web`](https://github.com/Zongsoft/Administratives/blob/master/src/api/Zongsoft.Administratives.Web.deploy)
+
+- The hosting projects
+	- [`daemon`](https://github.com/Zongsoft/hosting/blob/main/daemon/.deploy)
+	- [`terminal`](https://github.com/Zongsoft/hosting/blob/main/terminal/.deploy)
+	- [`web`](https://github.com/Zongsoft/hosting/blob/main/web/default/.deploy)
