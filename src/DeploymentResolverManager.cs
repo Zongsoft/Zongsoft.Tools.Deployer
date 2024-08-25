@@ -70,11 +70,11 @@ namespace Zongsoft.Tools.Deployer
 			#region 公共方法
 			public Task ResolveAsync(DeploymentContext context, DeploymentEntry deployment, CancellationToken cancellation)
 			{
-				var filePath = deployment.Destination.FullPath;
+				var filePath = Path.Combine(deployment.Destination.Path, deployment.Source.Name);
 
 				if(DeleteFile(filePath))
 				{
-					if(!context.IsVerbosity(Verbosity.Quiet))
+					if(context.IsVerbosity(Verbosity.Detailed))
 						context.Deployer.Terminal.FileDeletedSucceed(filePath);
 				}
 				else

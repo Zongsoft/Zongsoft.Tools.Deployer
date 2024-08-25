@@ -33,6 +33,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -54,11 +55,19 @@ namespace Zongsoft.Tools.Deployer
 				if(expression.Arguments.Length == 0 && !HasDefaultDeploymentFile())
 					return;
 
+				//创建部署器类的实例
+				var deployer = new Deployer(Zongsoft.Terminals.ConsoleTerminal.Instance, expression.Options);
+
 				//创建一个部署文件路径的列表
 				var paths = expression.Arguments.Length > 0 ? expression.Arguments : new[] { Deployer.DEFAULT_DEPLOYMENT_FILENAME };
 
-				//创建部署器类的实例
-				var deployer = new Deployer(Zongsoft.Terminals.ConsoleTerminal.Instance, expression.Options);
+				//修整部署文件的路径
+				for(int i = 0; i < paths.Length; i++)
+					paths[i] = Normalizer.Normalize(paths[i], deployer.Variables);
+
+				//剔除重复的部署文件
+				if(paths.Length > 1)
+					paths = paths.Distinct(OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal).ToArray();
 
 				//打印开始部署信息
 				deployer.StartDeployment(expression, paths);

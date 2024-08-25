@@ -141,7 +141,7 @@ namespace Zongsoft.Tools.Deployer
 				content.Append(CommandOutletColor.DarkGray, $"\t[");
 				content.Append(CommandOutletColor.DarkYellow, $"{i + 1}");
 				content.Append(CommandOutletColor.DarkGray, $"] ");
-				content.AppendLine(CommandOutletColor.DarkGreen, Normalizer.Normalize(filePaths[i], deployer.Variables));
+				content.AppendLine(CommandOutletColor.DarkGreen, filePaths[i]);
 			}
 
 			content.AppendLine(CommandOutletColor.DarkMagenta, Properties.Resources.Deployment_Options_Label);
