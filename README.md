@@ -41,6 +41,10 @@ This tool will sequentially load the environment variables, the contents of the 
 - If a property named `ApplicationName` is defined in `appsettings.json`, you can use `application` as a variable alias for that property.
 - The variable named `Framework` represents the .NET *TargetFramework* identity, which is defined in https://learn.microsoft.com/en-us/dotnet/standard/frameworks
 
+NuGet-related parameters can be specified via command options or environment variables:
+- `NuGet_Server` indicates the NuGet server information, the default value is: `https://api.nuget.org/v3/index.json`.
+- `NuGet_Packages` indicates the directory of NuGet packages, the default value is: `%USERPROFILE%/.nuget/packages`.
+
 ### filtering
 
 The part enclosed by `<` and `>` at the end of the entry is the filter condition, and entries that do not meet the filter criteria will be ignored.
@@ -112,16 +116,19 @@ dotnet deploy -edition:Debug -framework:net7.0 MyProject1.deploy MyProject2.depl
 	- deploy-release.cmd
 		> `dotnet deploy -edition:Release -framework:net7.0`
 
-### Command arguments
+### Command options
 
-- `verbosity` argument
-	- `quiet` Only explicitly necessary output information.
-- `overwrite` argument
-	- `latest` Performs a file copy deployment only if the last modification time of the source file is greater than the last modification time of the destionation file. If this argument is not specified, it will always be overwritten by default.
-- `destination` argument
-	- The specified deployment destination directory. If this argument is not specified, it defaults to the current directory.
+- `verbosity` option
+	- `quiet` Displays only the necessary output information, usually only error messages.
+	- `normal` Displays warning and error messages, if this command option is not specified, it is the default.
+	- `detailed` Displays all output messages, this option can be enabled when troubleshooting.
+- `overwrite` option
+	- `alway` Always copy and overwrite the destination file.
+	- `never` Copies the destination file only if it does not exist.
+	- `newest` Deploys file copying only if the last modification time of the source file is later than or equal to the last modification time of the destination file. if this command option is not specified, it is the default.
+- `destination` option
+	> The specified deployment destination directory. If this command option is not specified, it defaults to the current directory.
 
-Translated with DeepL.com (free version)
 ### Nuget Packages
 If the deployment entry is library files in the Nuget package directory, it will preferentially match the library files of the *TargetFramework* version specified by the `Framework` variable.
 

@@ -42,6 +42,10 @@ README: [English](https://github.com/Zongsoft/Zongsoft.Tools.Deployer/blob/maste
 - 如果 `appsettings.json` 中定义了名为 `ApplicationName` 的属性，则可以使用 `application` 作为该属性的变量别名。
 - 名称为 `Framework` 的变量表示 .NET *目标框架* 标识，有关该 *目标框架* 标识的定义请参考：https://learn.microsoft.com/zh-cn/dotnet/standard/frameworks
 
+可以通过命令选项或环境变量来指定 NuGet 相关参数：
+- `NuGet_Server` 表示 NuGet 服务器信息，默认值为：`https://api.nuget.org/v3/index.json`
+- `NuGet_Packages` 表示 NuGet 包的目录，默认值为：`%USERPROFILE%/.nuget/packages`
+
 ### 过滤
 
 在条目的尾部以 `<` 和 `>` 括起来的部分即为过滤条件，不满足过滤条件的条目会被忽略。
@@ -113,14 +117,18 @@ dotnet deploy -edition:Debug -framework:net7.0 MyProject1.deploy MyProject2.depl
 	- deploy-release.cmd
 		> `dotnet deploy -edition:Release -framework:net7.0`
 
-### 命令参数
+### 命令选项
 
-- `verbosity` 参数
-	- `quiet` 只显式必要的输出信息。
-- `overwrite` 参数
-	- `latest` 只有当源文件的最后修改时间大于目标文件的最后修改时间才执行文件复制部署，如果未指定该参数则默认始终覆盖。
-- `destination` 参数
-	- 指定的部署目的目录，如果未指定该参数则默认为当前目录。
+- `verbosity` 选项
+	- `quiet` 只显示必要的输出信息，通常只显示错误信息。
+	- `normal` 显示警示和错误信息，如果未指定该选项，其为默认值。
+	- `detailed` 显示所有的输出信息，在排查问题时可以启用该选项。
+- `overwrite` 选项
+	- `alway` 始终复制并覆盖目标文件。
+	- `never` 只有当目标文件不存在才复制。
+	- `newest` 只有当源文件的最后修改时间晚于或等于目标文件的最后修改时间才执行文件复制部署，如果未指定该参数，其为默认值。
+- `destination` 选项
+	> 指定的部署目的目录，如果未指定该选项则默认为当前目录。
 
 ### Nuget 包
 如果部署项为 Nuget 包目录下中的库文件，会优先匹配 `Framework` 变量指定的 *目标框架* 版本的库文件。
