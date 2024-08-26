@@ -1,8 +1,8 @@
 ﻿# The Zongsoft Deployment Tool
 
 ![License](https://img.shields.io/github/license/Zongsoft/Zongsoft.Tools.Deployer)
-![NuGet Downloads](https://img.shields.io/nuget/dt/Zongsoft.Tools.Deployer)
 ![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Tools.Deployer)
+![NuGet Downloads](https://img.shields.io/nuget/dt/Zongsoft.Tools.Deployer)
 ![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/Zongsoft.Tools.Deployer?style=social)
 
 README: [English](README.md) | [简体中文](README-zh_CN.md)
@@ -185,29 +185,35 @@ dotnet deploy -edition:Debug -framework:net7.0 MyProject1.deploy MyProject2.depl
 - `destination` option
 	> The specified deployment destination directory. If this command option is not specified, it defaults to the current directory.
 
-### Nuget Packages
-If the deployment entry is library files in the Nuget package directory, it will preferentially match the library files of the *TargetFramework* version specified by the `Framework` variable.
+### NuGet Packages
+If the deployment entry is library files in the NuGet package directory, it will preferentially match the library files of the *TargetFramework* version specified by the `Framework` variable.
 
 Assuming `Framework` variable is `net7.0`, when a deployment file has the following deployment entry:
 ```ini
 %NUGET_PACKAGES%/mysql.data/8.1.0/lib/netstandard2.1/*.dll
 ```
 
-When the `mysql.data` in the Nuget package directory contains the `net7.0` target framework version, use the library files of the target framework version, otherwise use the library files of the `netstandard2.1` target framework version specified in the deployment entry.
+When the `mysql.data` in the NuGet package directory contains the `net7.0` target framework version, use the library files of the target framework version, otherwise use the library files of the `netstandard2.1` target framework version specified in the deployment entry.
 
 ## Others
 
 ### Reference examples
 
 - The NuGet Packages
-	- [`Zongsoft.Data`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/src/Zongsoft.Data.deploy) [(NuGet)](https://www.nuget.org/packages/Zongsoft.Data)
-	- [`Zongsoft.Data.MySql`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/drivers/mysql/Zongsoft.Data.MySql.deploy) [(NuGet)](https://www.nuget.org/packages/Zongsoft.Data.MySql)
-	- [`Zongsoft.Security`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Security/src/Zongsoft.Security.deploy) [(NuGet)](https://www.nuget.org/packages/Zongsoft.Security)
-	- [`Zongsoft.Security.Web`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Security/api/Zongsoft.Security.Web.deploy) [(NuGet)](https://www.nuget.org/packages/Zongsoft.Security.Web)
-	- [`Zongsoft.Administratives`](https://github.com/Zongsoft/Administratives/blob/master/src/Zongsoft.Administratives.deploy) [(NuGet)](https://www.nuget.org/packages/Zongsoft.Administratives)
-	- [`Zongsoft.Administratives.Web`](https://github.com/Zongsoft/Administratives/blob/master/src/api/Zongsoft.Administratives.Web.deploy) [(NuGet)](https://www.nuget.org/packages/Zongsoft.Administratives.Web)
+	- [`Zongsoft.Data.deploy`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/src/Zongsoft.Data.deploy)
+	⇢ [NuGet](https://www.nuget.org/packages/Zongsoft.Data)
+	- [`Zongsoft.Data.MySql.deploy`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/drivers/mysql/Zongsoft.Data.MySql.deploy)
+	⇢ [NuGet](https://www.nuget.org/packages/Zongsoft.Data.MySql)
+	- [`Zongsoft.Security.deploy`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Security/src/Zongsoft.Security.deploy)
+	⇢ [NuGet](https://www.nuget.org/packages/Zongsoft.Security)
+	- [`Zongsoft.Security.Web.deploy`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Security/api/Zongsoft.Security.Web.deploy)
+	⇢ [NuGet](https://www.nuget.org/packages/Zongsoft.Security.Web)
+	- [`Zongsoft.Administratives.deploy`](https://github.com/Zongsoft/Administratives/blob/master/src/Zongsoft.Administratives.deploy)
+	⇢ [NuGet](https://www.nuget.org/packages/Zongsoft.Administratives)
+	- [`Zongsoft.Administratives.Web.deploy`](https://github.com/Zongsoft/Administratives/blob/master/src/api/Zongsoft.Administratives.Web.deploy)
+	⇢ [NuGet](https://www.nuget.org/packages/Zongsoft.Administratives.Web)
 
 - The hosting projects
-	- [`daemon`](https://github.com/Zongsoft/hosting/blob/main/daemon/.deploy)
-	- [`terminal`](https://github.com/Zongsoft/hosting/blob/main/terminal/.deploy)
-	- [`web`](https://github.com/Zongsoft/hosting/blob/main/web/default/.deploy)
+	- [`daemon.deploy`](https://github.com/Zongsoft/hosting/blob/main/daemon/.deploy)
+	- [`terminal.deploy`](https://github.com/Zongsoft/hosting/blob/main/terminal/.deploy)
+	- [`web.deploy`](https://github.com/Zongsoft/hosting/blob/main/web/default/.deploy)

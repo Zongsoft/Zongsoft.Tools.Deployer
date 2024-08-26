@@ -1,8 +1,8 @@
 ﻿# Zongsoft 部署工具
 
 ![License](https://img.shields.io/github/license/Zongsoft/Zongsoft.Tools.Deployer)
-![NuGet Downloads](https://img.shields.io/nuget/dt/Zongsoft.Tools.Deployer)
 ![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Tools.Deployer)
+![NuGet Downloads](https://img.shields.io/nuget/dt/Zongsoft.Tools.Deployer)
 ![GitHub Stars](https://img.shields.io/github/stars/Zongsoft/Zongsoft.Tools.Deployer?style=social)
 
 README: [English](README.md) | [简体中文](README-zh_CN.md)
@@ -181,29 +181,35 @@ dotnet deploy -edition:Debug -framework:net7.0 MyProject1.deploy MyProject2.depl
 - `destination` 选项
 	> 指定的部署目的目录，如果未指定该选项则默认为当前目录。
 
-### Nuget 包
-如果部署项为 Nuget 包目录下中的库文件，会优先匹配 `Framework` 变量指定的 *目标框架* 版本的库文件。
+### NuGet 包
+如果部署项为 NuGet 包目录下中的库文件，会优先匹配 `Framework` 变量指定的 *目标框架* 版本的库文件。
 
 假设 `Framework` 变量为 `net7.0`，当某部署文件中有如下部署项：
 ```ini
 %NUGET_PACKAGES%/mysql.data/8.1.0/lib/netstandard2.1/*.dll
 ```
 
-当 Nuget 包目录下的 `mysql.data` 含有 `net7.0` 目标框架版本，则使用该目标框架版本的库文件，否则使用部署项中所指定的 `netstandard2.1` 目标框架版本的库文件。
+当 NuGet 包目录下的 `mysql.data` 含有 `net7.0` 目标框架版本，则使用该目标框架版本的库文件，否则使用部署项中所指定的 `netstandard2.1` 目标框架版本的库文件。
 
 ## 其他
 
 ### 参考范例
 
 - NuGet 包
-	- [`Zongsoft.Data`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/src/Zongsoft.Data.deploy) [(NuGet)](https://www.nuget.org/packages/Zongsoft.Data)
-	- [`Zongsoft.Data.MySql`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/drivers/mysql/Zongsoft.Data.MySql.deploy) [(NuGet)](https://www.nuget.org/packages/Zongsoft.Data.MySql)
-	- [`Zongsoft.Security`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Security/src/Zongsoft.Security.deploy) [(NuGet)](https://www.nuget.org/packages/Zongsoft.Security)
-	- [`Zongsoft.Security.Web`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Security/api/Zongsoft.Security.Web.deploy) [(NuGet)](https://www.nuget.org/packages/Zongsoft.Security.Web)
-	- [`Zongsoft.Administratives`](https://github.com/Zongsoft/Administratives/blob/master/src/Zongsoft.Administratives.deploy) [(NuGet)](https://www.nuget.org/packages/Zongsoft.Administratives)
-	- [`Zongsoft.Administratives.Web`](https://github.com/Zongsoft/Administratives/blob/master/src/api/Zongsoft.Administratives.Web.deploy) [(NuGet)](https://www.nuget.org/packages/Zongsoft.Administratives.Web)
+	- [`Zongsoft.Data.deploy`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/src/Zongsoft.Data.deploy)
+	⇢ [NuGet](https://www.nuget.org/packages/Zongsoft.Data)
+	- [`Zongsoft.Data.MySql.deploy`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Data/drivers/mysql/Zongsoft.Data.MySql.deploy)
+	⇢ [NuGet](https://www.nuget.org/packages/Zongsoft.Data.MySql)
+	- [`Zongsoft.Security.deploy`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Security/src/Zongsoft.Security.deploy)
+	⇢ [NuGet](https://www.nuget.org/packages/Zongsoft.Security)
+	- [`Zongsoft.Security.Web.deploy`](https://github.com/Zongsoft/Framework/blob/master/Zongsoft.Security/api/Zongsoft.Security.Web.deploy)
+	⇢ [NuGet](https://www.nuget.org/packages/Zongsoft.Security.Web)
+	- [`Zongsoft.Administratives.deploy`](https://github.com/Zongsoft/Administratives/blob/master/src/Zongsoft.Administratives.deploy)
+	⇢ [NuGet](https://www.nuget.org/packages/Zongsoft.Administratives)
+	- [`Zongsoft.Administratives.Web.deploy`](https://github.com/Zongsoft/Administratives/blob/master/src/api/Zongsoft.Administratives.Web.deploy)
+	⇢ [NuGet](https://www.nuget.org/packages/Zongsoft.Administratives.Web)
 
 - 宿主项目
-	- [`daemon`](https://github.com/Zongsoft/hosting/blob/main/daemon/.deploy)
-	- [`terminal`](https://github.com/Zongsoft/hosting/blob/main/terminal/.deploy)
-	- [`web`](https://github.com/Zongsoft/hosting/blob/main/web/default/.deploy)
+	- [`daemon.deploy`](https://github.com/Zongsoft/hosting/blob/main/daemon/.deploy)
+	- [`terminal.deploy`](https://github.com/Zongsoft/hosting/blob/main/terminal/.deploy)
+	- [`web.deploy`](https://github.com/Zongsoft/hosting/blob/main/web/default/.deploy)
