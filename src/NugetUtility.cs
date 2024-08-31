@@ -33,7 +33,11 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Collections.Generic;
+
+using NuGet.Frameworks;
+using NuGet.Versioning;
 
 namespace Zongsoft.Tools.Deployer
 {
@@ -77,6 +81,22 @@ namespace Zongsoft.Tools.Deployer
 		public static string GetPackagesDirectory(IDictionary<string, string> variables)
 		{
 			return variables.TryGetValue(NUGET_PACKAGES_ENVIRONMENT, out var directory) && !string.IsNullOrEmpty(directory) ? directory : DEFAULT_PACKAGES_DIRECTORY;
+		}
+
+		public static string GetNearestLibraryPath(string path, string framework)
+		{
+			if(string.IsNullOrEmpty(path) || string.IsNullOrEmpty(framework))
+				return null;
+
+			var directory = new DirectoryInfo(Path.Combine(path, "lib"));
+			if(!directory.Exists)
+				return null;
+
+			var frameworks = directory.GetDirectories().Select(dir => NuGetFramework.Parse(dir.Name));
+
+			//从包的库目录中查找最适用的框架版本
+			var nearest = NuGetFrameworkUtility.GetNearest(frameworks, NuGetFramework.Parse(framework), p => p);
+			return nearest == null || nearest.IsUnsupported ? null : Path.Combine(path, "lib", nearest.GetShortFolderName());
 		}
 
 		private static NuGet.Packaging.VersionFolderPathResolver _folder = null;

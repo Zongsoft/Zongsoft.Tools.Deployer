@@ -66,57 +66,75 @@ namespace Zongsoft.Tools.Deployer
 			if(!Utility.TryGetTargetFramework(variables, out var framework))
 				return false;
 
-			//解析当前Nuget包路径中的前导部分和“目标框架”名部分
-			if(ResolveNugetDirectory(directory, out var precursor, out var frameworkInPath))
-			{
-				//如果待替换的目录名是“目标框架”名则不需要替换
-				if(frameworkInPath == framework.AsSpan())
-					return false;
-
-				//将Nuget包目录的最后的目录名替换成“目标框架”参数值
-				var regulatedPath = Path.Combine(precursor.ToString(), framework);
-
-				//如果替换成“目标框架”版本的Nuget包目录是存在的，则表示可替换成该“目标框架”包目录
-				if(Directory.Exists(regulatedPath))
-				{
-					result = regulatedPath;
-					return true;
-				}
-			}
-
-			return false;
+			result = RegulateLibraryPath(directory, framework);
+			return !string.IsNullOrEmpty(result);
 		}
 		#endregion
 
 		#region 私有方法
-		/*
-		 * 譬如 Nuget 包路径如下：
-		 *	C:\Users\Administrator\.nuget\packages\mysql.data\8.1.0\lib\netstandard2.0
-		 *	
-		 * 前导路径 precursor 参数的返回值为：C:\Users\Administrator\.nuget\packages\mysql.data\8.1.0\lib
-		 * 路径目标 framework 参数的返回值为：netstandard2.0
-		 */
-		private static bool ResolveNugetDirectory(string directory, out ReadOnlySpan<char> precursor, out ReadOnlySpan<char> framework)
+		private static readonly char[] PATH_SEPARATORS = new[] { '/', '\\' };
+
+		/// <summary>从指定的库路径中查找最适用的框架版本，并将库路径中的框架替换为适用框架。</summary>
+		/// <param name="path">待修整的库路径。</param>
+		/// <param name="framework">当前系统的框架版本。</param>
+		/// <returns>返回被修整过的库路径，如果指定的路径不是一个有效的库路径则返回空。</returns>
+		/// <example>
+		///		<para>
+		///			假设 %NuGet_Packages%/mysql.data/8.1.10/lib 包库目录下有：
+		///		</para>
+		///		<list type="bullet">
+		///			<item>net6.0</item>
+		///			<item>net7.0</item>
+		///			<item>net8.0</item>
+		///			<item>netstandard2.0</item>
+		///			<item>netstandard2.1</item>
+		///		</list>
+		///		<para>则 path 参数与之对应的返回值：</para>
+		///		<list type="bullet">
+		///			<item>
+		///				<term>%NuGet_Packages%\mysql.data\8.1.0\lib\net9.0</term>
+		///				<description>%NuGet_Packages%\mysql.data\8.1.0\lib\net8.0</description>
+		///			</item>
+		///			<item>
+		///				<term>%NuGet_Packages%\mysql.data\8.1.0\lib</term>
+		///				<description>%NuGet_Packages%\mysql.data\8.1.0\lib\net8.0</description>
+		///			</item>
+		///			<item>
+		///				<term>%NuGet_Packages%\mysql.data\8.1.0\lib\net9.0\*.dll</term>
+		///				<description>%NuGet_Packages%\mysql.data\8.1.0\lib\net8.0\*.dll</description>
+		///			</item>
+		///			<item>
+		///				<term>%NuGet_Packages%\mysql.data\8.1.0</term>
+		///				<description><c>null</c></description>
+		///			</item>
+		///		</list>
+		/// </example>
+		private static string RegulateLibraryPath(string path, string framework)
 		{
-			int count = 0;
-			int position;
+			var parts = path.Split(PATH_SEPARATORS);
 
-			do
+			for(int i = 0; i < parts.Length; i++)
 			{
-				position = directory.LastIndexOfAny(new[] { '/', '\\' }, directory.Length - ++count);
-			} while(position == directory.Length - count);
+				if(parts[i] == "lib")
+				{
+					var segment = new ArraySegment<string>(parts, 0, i);
+					var libraryPath = Path.Combine(segment.ToArray());
 
-			if(position > 0)
-			{
-				var span = directory.AsSpan();
-				precursor = span[..position];
-				framework = span.Slice(position + 1, directory.Length - position - count);
-				return true;
+					if(i < parts.Length - 1 && !string.IsNullOrEmpty(parts[i + 1]))
+						framework = parts[i + 1];
+
+					var result = NugetUtility.GetNearestLibraryPath(libraryPath, framework);
+					if(string.IsNullOrEmpty(result))
+						return null;
+
+					if(parts.Length <= i + 2)
+						return result;
+
+					return Path.Combine(result, string.Join(Path.PathSeparator, parts, i + 2, parts.Length - i - 2));
+				}
 			}
 
-			framework = ReadOnlySpan<char>.Empty;
-			precursor = ReadOnlySpan<char>.Empty;
-			return false;
+			return null;
 		}
 		#endregion
 	}

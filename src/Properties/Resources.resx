@@ -217,4 +217,10 @@
   <data name="Environment.Variables.Label" xml:space="preserve">
     <value>Environment Variables:</value>
   </data>
+  <data name="UnspecifiedVariable.Message" xml:space="preserve">
+    <value>The ‘{0}’ variable is not specified.</value>
+  </data>
+  <data name="NoPackageForFramework" xml:space="preserve">
+    <value>The specified '{0}' package does not have a '{1}' framework version.</value>
+  </data>
 </root>

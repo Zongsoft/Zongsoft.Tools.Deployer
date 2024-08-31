@@ -91,6 +91,12 @@ namespace Zongsoft.Tools.Deployer
 				terminal.WriteLine(CommandOutletColor.DarkYellow, string.Format(Properties.Resources.FileNotExists_Message, filePath));
 		}
 
+		public static void UnspecifiedVariable(this ITerminal terminal, string variable)
+		{
+			terminal.Write(CommandOutletColor.Red, Properties.Resources.Error_Prompt);
+			terminal.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.UnspecifiedVariable_Message, variable));
+		}
+
 		public static void UndefinedVariable(this ITerminal terminal, string variable, string expression) => UndefinedVariable(terminal, variable, expression, null, -1);
 		public static void UndefinedVariable(this ITerminal terminal, string variable, string expression, string filePath, int lineNumber = -1)
 		{

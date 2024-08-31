@@ -217,4 +217,10 @@
   <data name="Environment.Variables.Label" xml:space="preserve">
     <value>环境变量：</value>
   </data>
+  <data name="UnspecifiedVariable.Message" xml:space="preserve">
+    <value>“{0}”变量是未定义的。</value>
+  </data>
+  <data name="NoPackageForFramework" xml:space="preserve">
+    <value>指定的“{0}”包没有匹配的 {1} 框架版本。</value>
+  </data>
 </root>

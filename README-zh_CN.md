@@ -61,11 +61,16 @@ delete:Zongsoft.Messaging.Mqtt.option
 
 #### NuGet 解析器
 
-解析器名称为：`nuget`，表示下载 NuGet 包并执行相应部署。
+解析器名称为：`nuget`，表示下载 NuGet 包并执行相应部署，同时还会下载指定包的相关依赖包。
 
-解析参数格式：`package@version/path`，其中 `@version` 和 `/{path}` 可选。如果未指定版本或版本为 `latest` 则表示最新版本，如果未指定路径则默认为包内的`.deploy`文件。
+解析参数格式：`package@version/path`，其中 `@version` 和 `/{path}` 可选。
+- 如果未指定版本或版本为 `latest` 则表示最新版本；
+- 如果未指定路径则：
+	- 若该包的根目录包含 `.deploy` 文件，则优先部署该部署文件；
+	- 部署该包的 `lib/{framework}` 库文件目录下的所有文件。
+		> `{framework}` 表示最接近 `$(Framework)` 变量声明的 *目标框架* 版本。
 
-> 💡 提示：_**Z**ongsoft_ 的 NuGet 包内根目录有一个名为 `.deploy` 的部署文件，包内的 `artifacts` 目录则存放着它的插件文件(`*.plugin`)_(至少一个)_、配置文件(`*.option`)、[数据映射文件](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Data)(`*.mapping`)等附属文件。
+> 💡 提示：_**Z**ongsoft_ 的 NuGet 包内根目录通常有一个名为 `.deploy` 的部署文件，包内的 `artifacts` 目录则存放着它的插件文件(`*.plugin`)_(至少一个)_、配置文件(`*.option`)、[数据映射文件](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Data)(`*.mapping`)等附属文件。
 
 > 💡 注意：名为 `NuGet_Server` 变量定义了该解析器的 NuGet 包源，如果未定义则采用 `https://api.nuget.org/v3/index.json` 作为其默认值。
 
@@ -77,14 +82,28 @@ delete:Zongsoft.Messaging.Mqtt.option
 	> nuget:Zongsoft.Plugins/plugins/Main.plugin
 	> ```
 
-- 获取 `Zongsoft.Data` 包的 `6.0.0` 版本，并执行包中的 `.deploy` 部署文件。
+- 获取 `Zongsoft.Data` 包的 `6.2.0` 版本，并执行包中的 `.deploy` 部署文件。
 	> ```ini
 	> [plugins zongsoft data]
-	> nuget:Zongsoft.Data@6.0.0
-	> [plugins zongsoft data]
-	> nuget:Zongsoft.Data@6.0.0/.deploy
+	> nuget:Zongsoft.Data@6.2.0
+	> nuget:Zongsoft.Data@6.2.0/.deploy
 	> ```
-	> **注：** 以上两种写法是一样的效果。
+	> **注：** 因为 `Zongsoft.Data` 包的根目录包含 `.deploy` 文件，所以上述两种写法是一样的效果。
+
+- 部署 `MySql.Data` 包的 `8.3.0` 版本。_(假设指定了 `Framework` 变量值为 `net8.0`)_
+	> ```ini
+	> nuget:MySql.Data@8.3.0
+	> ```
+
+	> 1. 首先下载 `MySql.Data@8.3.0` 包以及它的依赖包（忽略以 `System.` 和 `Microsoft.Extensions.` 打头的依赖包）：
+	> ```
+	> BouncyCastle.Cryptography     2.2.1
+	> Google.Protobuf               3.25.1
+	> K4os.Compression.LZ4.Streams  1.3.5
+	> ZstdSharp.Port                0.7.1
+	> ```
+	> 2. 依次获取上述依赖包中最接近 `Framework` 变量指定的 `net8.0` *目标框架* 版本的库文件。
+	> 3. 复制下载的 NuGet 包中的库文件到目标目录。
 
 ### 过滤
 
@@ -154,19 +173,19 @@ dotnet tool uninstall -g zongsoft.tools.deployer
 
 - 在目标(宿主)目录执行默认部署：
 ```bash
-dotnet deploy -edition:Debug -framework:net7.0
+dotnet deploy -edition:Debug -framework:net8.0
 ```
 
 - 如果目标(宿主)目录没有默认部署文件(`.deploy`)，则必须手动指定部署文件名(支持多个部署文件)：
 ```bash
-dotnet deploy -edition:Debug -framework:net7.0 MyProject1.deploy MyProject2.deploy MyProject3.deploy
+dotnet deploy -edition:Debug -framework:net8.0 MyProject1.deploy MyProject2.deploy MyProject3.deploy
 ```
 
 - 为了部署方便可以在目标(宿主)项目创建相应版本的部署脚本文件，譬如：
 	- deploy-debug.cmd
-		> `dotnet deploy -edition:Debug -framework:net7.0`
+		> `dotnet deploy -edition:Debug -framework:net8.0`
 	- deploy-release.cmd
-		> `dotnet deploy -edition:Release -framework:net7.0`
+		> `dotnet deploy -edition:Release -framework:net8.0`
 
 ### 命令选项
 
@@ -184,12 +203,17 @@ dotnet deploy -edition:Debug -framework:net7.0 MyProject1.deploy MyProject2.depl
 ### NuGet 包
 如果部署项为 NuGet 包目录下中的库文件，会优先匹配 `Framework` 变量指定的 *目标框架* 版本的库文件。
 
-假设 `Framework` 变量为 `net7.0`，当某部署文件中有如下部署项：
+#### 最近适配
+
+假设 `Framework` 变量为 `net9.0`，当某部署文件中有如下部署项：
 ```ini
-%NUGET_PACKAGES%/mysql.data/8.1.0/lib/netstandard2.1/*.dll
+%NUGET_PACKAGES%/mysql.data/8.3.0/lib/net9.0/*.dll
 ```
 
-当 NuGet 包目录下的 `mysql.data` 含有 `net7.0` 目标框架版本，则使用该目标框架版本的库文件，否则使用部署项中所指定的 `netstandard2.1` 目标框架版本的库文件。
+但上述包库目录并未包含 `net9.0` 框架版本，因此本工具会采用最适用(*接近*)该框架版本的库文件。即该路径将被重新定向为：
+```ini
+%NUGET_PACKAGES%/mysql.data/8.3.0/lib/net8.0/*.dll
+```
 
 ## 其他
 

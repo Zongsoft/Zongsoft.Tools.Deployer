@@ -43,7 +43,7 @@ namespace Zongsoft.Tools.Deployer
 {
 	internal static class Utility
 	{
-		private const string FRAMEWORK_VARIABLE = "Framework";
+		internal const string FRAMEWORK_VARIABLE = "Framework";
 
 		public static readonly char[] TARGET_SEPARATORS = new[] { ',', ';' };
 		public static readonly char[] PATH_SEPARATORS = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
@@ -68,7 +68,8 @@ namespace Zongsoft.Tools.Deployer
 			if(string.IsNullOrEmpty(targets))
 				return true;
 
-			return IsTargetFramework(GetTargetFramework(variables), string.IsNullOrEmpty(targets) ? Array.Empty<string>() : targets.Split(TARGET_SEPARATORS, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
+			return TryGetTargetFramework(variables, out var framework) &&
+				IsTargetFramework(framework, string.IsNullOrEmpty(targets) ? Array.Empty<string>() : targets.Split(TARGET_SEPARATORS, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
 		}
 
 		public static bool IsTargetFramework(string value, params string[] targets)

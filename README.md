@@ -61,11 +61,16 @@ delete:Zongsoft.Messaging.Mqtt.option
 
 #### NuGet Parser
 
-The parser name is: `nuget`, which means download the NuGet package and perform the deployment.
+The parser name is: `nuget`, which means download the NuGet package and perform the deployment, and that the dependencies of the specified package are also downloaded.
 
-The format of _Parser-Argument_: `package@version/path`, where `@version` and `/{path}` parts are optional. If the version part is unspecified or it is `latest`, it means the latest version. If the path part is unspecified, it defaults to the `.deploy` file in the package.
+The format of _Parser-Argument_: `package@version/path`, where `@version` and `/{path}` parts are optional.
+- If the version part is unspecified or it is `latest`, it means the latest version.
+- If the path part is unspecified:
+	- If the root directory of the package contains a `.deploy` file, the deployment file is deployed first;
+	- Deploy all files in the `lib/{framework}` library files directory of the package.
+		> The `{framework}` indicates the version of the *target framework* nearest to the one declared by the `$(Framework)` variable.
 
-> 💡 **Tip:** _**Z**ongsoft_'s NuGet package has a deployment file named `.deploy` in it's root directory, and the `artifacts` directory in the package includes its plugin files(`*.plugin`)_(required, one or more)_, configuration files(`*.option`), the mapping files(`*.mapping`) for [_**Z**ongsoft.**D**ata_ ORM](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Data), and other ancillary files.
+> 💡 **Tip:** _**Z**ongsoft_'s NuGet package usually has a deployment file named `.deploy` in it's root directory, and the `artifacts` directory in the package includes its plugin files(`*.plugin`)_(required, one or more)_, configuration files(`*.option`), the mapping files(`*.mapping`) for [_**Z**ongsoft.**D**ata_ ORM](https://github.com/Zongsoft/Framework/tree/master/Zongsoft.Data), and other ancillary files.
 
 > 💡 **Note:** The variable named `NuGet_Server` defines the NuGet package source for this parser.
 > If undefined then `https://api.nuget.org/v3/index.json` is used as its default value.
@@ -78,14 +83,28 @@ The format of _Parser-Argument_: `package@version/path`, where `@version` and `/
 	> nuget:Zongsoft.Plugins/plugins/Main.plugin
 	> ```
 
-- Get the `6.0.0` version of the `Zongsoft.Data` NuGet package and execute the `.deploy` deployment file in the package.
+- Get the `6.2.0` version of the `Zongsoft.Data` NuGet package and execute the `.deploy` deployment file in the package.
 	> ```ini
 	> [plugins zongsoft data]
-	> nuget:Zongsoft.Data@6.0.0
-	> [plugins zongsoft data]
-	> nuget:Zongsoft.Data@6.0.0/.deploy
+	> nuget:Zongsoft.Data@6.2.0
+	> nuget:Zongsoft.Data@6.2.0/.deploy
 	> ```
-	> **Note:** The above two writing styles have the same effect.
+	> **Note:** Since the root directory of the `Zongsoft.Data` package contains the `.deploy` file, the above two writing styles have the same effect.
+
+- Deploy version 8.3.0 of the MySql. _(Assuming the value of the `Framework` variable is `net8.0`)_
+	> ```ini
+	> nuget:MySql.Data@8.3.0
+	> ```
+
+	> 1. First download the `MySql.Data@8.3.0` package and its dependencies _(ignore dependencies starting with `System.` and `Microsoft.Extensions.`)_:
+	> ```
+	> BouncyCastle.Cryptography     2.2.1
+	> Google.Protobuf               3.25.1
+	> K4os.Compression.LZ4.Streams  1.3.5
+	> ZstdSharp.Port                0.7.1
+	> ```
+	> 2. Get the library files in the above dependency packages that are nearest to the `net8.0` *Target Framework* version specified by the `Framework` variable.
+	> 3. Copy the library files from the downloaded NuGet package to the destination directory.
 
 ### Filtering
 
@@ -158,19 +177,19 @@ dotnet tool uninstall -g zongsoft.tools.deployer
 
 - Execute the default deployment in the host(target) directory:
 ```bash
-dotnet deploy -edition:Debug -framework:net7.0
+dotnet deploy -edition:Debug -framework:net8.0
 ```
 
 - If the host(target) directory does not have a default deployment file (`.deploy`), you must manually specify the deployment file name (multiple deployment files are supported):
 ```bash
-dotnet deploy -edition:Debug -framework:net7.0 MyProject1.deploy MyProject2.deploy MyProject3.deploy
+dotnet deploy -edition:Debug -framework:net8.0 MyProject1.deploy MyProject2.deploy MyProject3.deploy
 ```
 
 - For the convenience of deployment, you can create a corresponding edition of the deployment script files in the host(target) project, for example:
 	- deploy-debug.cmd
-		> `dotnet deploy -edition:Debug -framework:net7.0`
+		> `dotnet deploy -edition:Debug -framework:net8.0`
 	- deploy-release.cmd
-		> `dotnet deploy -edition:Release -framework:net7.0`
+		> `dotnet deploy -edition:Release -framework:net8.0`
 
 ### Command options
 
@@ -188,12 +207,17 @@ dotnet deploy -edition:Debug -framework:net7.0 MyProject1.deploy MyProject2.depl
 ### NuGet Packages
 If the deployment entry is library files in the NuGet package directory, it will preferentially match the library files of the *TargetFramework* version specified by the `Framework` variable.
 
-Assuming `Framework` variable is `net7.0`, when a deployment file has the following deployment entry:
+#### Nearest Matching
+
+Assuming the `Framework` variable is `net9.0`, when a deployment file has the following deployment items:
 ```ini
-%NUGET_PACKAGES%/mysql.data/8.1.0/lib/netstandard2.1/*.dll
+%NUGET_PACKAGES%/mysql.data/8.3.0/lib/net9.0/*.dll
 ```
 
-When the `mysql.data` in the NuGet package directory contains the `net7.0` target framework version, use the library files of the target framework version, otherwise use the library files of the `netstandard2.1` target framework version specified in the deployment entry.
+However, the above package library directory does not contains the `net9.0` framework version, so the tool will use the library file that is most applicable(*nearest*) to that framework version. The path will be redirected to:
+```ini
+%NUGET_PACKAGES%/mysql.data/8.3.0/lib/net8.0/*.dll
+```
 
 ## Others
 

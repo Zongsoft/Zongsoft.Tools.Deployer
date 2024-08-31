@@ -263,6 +263,15 @@ namespace Zongsoft.Tools.Deployer.Properties {
         }
         
         /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; package does not have a &apos;{1}&apos; framework version. 的本地化字符串。
+        /// </summary>
+        internal static string NoPackageForFramework {
+            get {
+                return ResourceManager.GetString("NoPackageForFramework", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 [NuGet] The download of the specified {0}@{1} package failed, please try again later or change the download source. 的本地化字符串。
         /// </summary>
         internal static string NuGet_DownloadFailed_Message {
@@ -313,6 +322,15 @@ namespace Zongsoft.Tools.Deployer.Properties {
         internal static string Tips_Prompt {
             get {
                 return ResourceManager.GetString("Tips.Prompt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 The ‘{0}’ variable is not specified. 的本地化字符串。
+        /// </summary>
+        internal static string UnspecifiedVariable_Message {
+            get {
+                return ResourceManager.GetString("UnspecifiedVariable.Message", resourceCulture);
             }
         }
         
