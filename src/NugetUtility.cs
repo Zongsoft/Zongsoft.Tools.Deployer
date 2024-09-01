@@ -34,10 +34,17 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using NuGet.Frameworks;
+using NuGet.Common;
+using NuGet.Protocol;
+using NuGet.Protocol.Core.Types;
+using NuGet.Packaging;
+using NuGet.Packaging.Core;
 using NuGet.Versioning;
+using NuGet.Frameworks;
 
 namespace Zongsoft.Tools.Deployer
 {
@@ -51,8 +58,15 @@ namespace Zongsoft.Tools.Deployer
 		internal const string NUGET_PACKAGES_ENVIRONMENT = "NuGet_Packages";
 		#endregion
 
+		#region 私有变量
+		private static VersionFolderPathResolver _folder = null;
+		private static readonly Dictionary<string, IPackageSearchMetadata> _metadatas = new(StringComparer.OrdinalIgnoreCase);
+		private static readonly Dictionary<string, string> _packages = new(StringComparer.OrdinalIgnoreCase);
+		private static readonly Dictionary<string, ICollection<string>> _dependents = new(StringComparer.OrdinalIgnoreCase);
+		#endregion
+
 		#region 静态属性
-		private static string DEFAULT_PACKAGES_DIRECTORY => Path.Combine(NuGet.Common.NuGetEnvironment.GetFolderPath(NuGet.Common.NuGetFolderPath.NuGetHome), "packages");
+		private static string DEFAULT_PACKAGES_DIRECTORY => Path.Combine(NuGetEnvironment.GetFolderPath(NuGet.Common.NuGetFolderPath.NuGetHome), "packages");
 		#endregion
 
 		#region 初始方法
@@ -99,15 +113,88 @@ namespace Zongsoft.Tools.Deployer
 			return nearest == null || nearest.IsUnsupported ? null : Path.Combine(path, "lib", nearest.GetShortFolderName());
 		}
 
-		private static NuGet.Packaging.VersionFolderPathResolver _folder = null;
-		public static string GetFolderPath(string packagesDirectory, string name, string version) => NuGet.Versioning.NuGetVersion.TryParse(version, out var ver) ? GetFolderPath(packagesDirectory, name, ver) : GetFolderPath(packagesDirectory, name);
-		public static string GetFolderPath(string packagesDirectory, string name, NuGet.Versioning.NuGetVersion version = null)
+		public static string GetFolderPath(string packagesDirectory, string name, string version) => NuGetVersion.TryParse(version, out var ver) ? GetFolderPath(packagesDirectory, name, ver) : GetFolderPath(packagesDirectory, name);
+		public static string GetFolderPath(string packagesDirectory, string name, NuGetVersion version = null)
 		{
-			if(_folder == null)
-				_folder = new NuGet.Packaging.VersionFolderPathResolver(packagesDirectory);
-
+			_folder ??= new VersionFolderPathResolver(packagesDirectory);
 			return version == null ? _folder.GetVersionListPath(name) : _folder.GetInstallPath(name, version);
 		}
+
+		public static async Task<IPackageSearchMetadata> GetPackageMetadataAsync(IDictionary<string, string> variables, string name, string version, CancellationToken cancellation)
+		{
+			var key = GetCacheKey(name, version);
+			if(_metadatas.TryGetValue(key, out var metadata))
+				return metadata;
+
+			using var cache = new SourceCacheContext() { NoCache = true };
+			var repository = GetRepository(variables);
+			var resource = repository.GetResource<PackageMetadataResource>();
+
+			if(string.IsNullOrEmpty(version) || string.Equals(version, "latest", StringComparison.OrdinalIgnoreCase))
+			{
+				var metadatas = await resource.GetMetadataAsync(name, false, false, cache, NullLogger.Instance, cancellation);
+				var result = _metadatas[key] = metadatas.MaxBy(metadata => metadata.Identity.Version);
+
+				if(result != null)
+					_metadatas[GetCacheKey(name, result.Identity.Version)] = result;
+
+				return result;
+			}
+
+			return _metadatas[key] = NuGetVersion.TryParse(version, out var nugetVersion) ?
+				await resource.GetMetadataAsync(new PackageIdentity(name, nugetVersion), cache, NullLogger.Instance, cancellation) : null;
+		}
+
+		public static async Task<string> DownloadPackageAsync(IDictionary<string, string> variables, string name, NuGetVersion version, CancellationToken cancellation)
+		{
+			if(string.IsNullOrEmpty(name) || version == null)
+				return null;
+
+			var key = GetCacheKey(name, version);
+			if(_packages.TryGetValue(name, out var package))
+				return package;
+
+			using var cache = new SourceCacheContext();
+			var context = new PackageDownloadContext(cache);
+			var directory = GetPackagesDirectory(variables);
+			var resource = await GetRepository(variables).GetResourceAsync<DownloadResource>(cancellation);
+			using var result = await resource.GetDownloadResourceResultAsync(new PackageIdentity(name, version), context, directory, NullLogger.Instance, cancellation);
+
+			return _packages[key] = result.Status == DownloadResourceResultStatus.Available || result.Status == DownloadResourceResultStatus.AvailableWithoutStream ? GetFolderPath(directory, name, version) : null;
+		}
+
+		public static async Task<IEnumerable<string>> DownloadDependentPackageAsync(IDictionary<string, string> variables, IPackageSearchMetadata metadata, string framework, CancellationToken cancellation)
+		{
+			if(metadata == null || metadata.DependencySets == null)
+				return Array.Empty<string>();
+
+			var key = GetCacheKey(metadata.Identity);
+			if(_dependents.TryGetValue(key, out var dependents))
+				return dependents;
+
+			var nearest = NuGetFrameworkExtensions.GetNearest(metadata.DependencySets, NuGetFramework.Parse(framework));
+			if(nearest == null)
+				return _dependents[key] = Array.Empty<string>();
+
+			var result = new List<string>(nearest.Packages.Count());
+
+			foreach(var package in nearest.Packages)
+			{
+				//忽略依赖中的系统包或框架内置包
+				if(package.Id.StartsWith("System.") || package.Id.StartsWith("Microsoft.Extensions."))
+					continue;
+
+				var path = await DownloadPackageAsync(variables, package.Id, package.VersionRange.MinVersion, cancellation);
+				result.Add(path);
+			}
+
+			return _dependents[key] = result;
+		}
+
+		private static string GetCacheKey(string name, string version) => string.IsNullOrEmpty(version) ? name : $"{name}:{version}";
+		private static string GetCacheKey(string name, NuGetVersion version) => $"{name}:{version}";
+		private static string GetCacheKey(PackageIdentity identity) => $"{identity.Id}:{identity.Version}";
+		private static SourceRepository GetRepository(IDictionary<string, string> variables) => Repository.Factory.GetCoreV3(NugetUtility.GetNugetServer(variables));
 		#endregion
 	}
 }

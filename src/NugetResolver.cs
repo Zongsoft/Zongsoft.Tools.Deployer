@@ -33,17 +33,9 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-
-using NuGet.Common;
-using NuGet.Protocol;
-using NuGet.Protocol.Core.Types;
-using NuGet.Packaging.Core;
-using NuGet.Versioning;
-using NuGet.Frameworks;
 
 namespace Zongsoft.Tools.Deployer
 {
@@ -73,14 +65,14 @@ namespace Zongsoft.Tools.Deployer
 				return Array.Empty<DeploymentUtility.PathToken>();
 			}
 
-			var metadata = await GetPackageMetadataAsync(context.Variables, argument.Name, argument.Version, cancellation);
+			var metadata = await NugetUtility.GetPackageMetadataAsync(context.Variables, argument.Name, argument.Version, cancellation);
 			if(metadata == null)
 			{
 				context.Deployer.Terminal.NotFound(argument.Name, argument.Version);
 				return Array.Empty<DeploymentUtility.PathToken>();
 			}
 
-			var path = await DownloadPackageAsync(context.Variables, argument.Name, metadata.Identity.Version, cancellation);
+			var path = await NugetUtility.DownloadPackageAsync(context.Variables, argument.Name, metadata.Identity.Version, cancellation);
 			if(string.IsNullOrEmpty(path))
 			{
 				context.Deployer.Terminal.DownloadFailed(argument.Name, argument.Version);
@@ -88,7 +80,7 @@ namespace Zongsoft.Tools.Deployer
 			}
 
 			//下载依赖的包
-			var dependents = await DownloadDependentPackageAsync(context.Variables, metadata, framework, cancellation);
+			var dependents = await NugetUtility.DownloadDependentPackageAsync(context.Variables, metadata, framework, cancellation);
 
 			//如果未指定路径参数
 			if(string.IsNullOrEmpty(argument.Path))
@@ -127,64 +119,6 @@ namespace Zongsoft.Tools.Deployer
 
 			return DeploymentUtility.GetFiles(Path.Combine(path, argument.Path), context.Variables);
 		}
-		#endregion
-
-		#region 私有方法
-		private static async Task<IPackageSearchMetadata> GetPackageMetadataAsync(IDictionary<string, string> variables, string name, string version, CancellationToken cancellation)
-		{
-			using var cache = new SourceCacheContext() { NoCache = true };
-			var repository = GetRepository(variables);
-			var resource = repository.GetResource<PackageMetadataResource>();
-
-			if(string.IsNullOrEmpty(version) || string.Equals(version, "latest", StringComparison.OrdinalIgnoreCase))
-			{
-				var result = await resource.GetMetadataAsync(name, false, false, cache, NullLogger.Instance, cancellation);
-				return result.MaxBy(metadata => metadata.Identity.Version);
-			}
-
-			return NuGetVersion.TryParse(version, out var nugetVersion) ?
-				await resource.GetMetadataAsync(new PackageIdentity(name, nugetVersion), cache, NullLogger.Instance, cancellation) : null;
-		}
-
-		private static async Task<string> DownloadPackageAsync(IDictionary<string, string> variables, string name, NuGetVersion version, CancellationToken cancellation)
-		{
-			if(string.IsNullOrEmpty(name) || version == null)
-				return null;
-
-			using var cache = new SourceCacheContext();
-			var context = new PackageDownloadContext(cache);
-			var directory = NugetUtility.GetPackagesDirectory(variables);
-			var resource = await GetRepository(variables).GetResourceAsync<DownloadResource>(cancellation);
-			using var result = await resource.GetDownloadResourceResultAsync(new PackageIdentity(name, version), context, directory, NullLogger.Instance, cancellation);
-
-			return result.Status == DownloadResourceResultStatus.Available || result.Status == DownloadResourceResultStatus.AvailableWithoutStream ? NugetUtility.GetFolderPath(directory, name, version) : null;
-		}
-
-		private static async Task<IEnumerable<string>> DownloadDependentPackageAsync(IDictionary<string, string> variables, IPackageSearchMetadata metadata, string framework, CancellationToken cancellation)
-		{
-			if(metadata == null || metadata.DependencySets == null)
-				return Array.Empty<string>();
-
-			var nearest = NuGetFrameworkExtensions.GetNearest(metadata.DependencySets, NuGetFramework.Parse(framework));
-			if(nearest == null)
-				return Array.Empty<string>();
-
-			var result = new List<string>(nearest.Packages.Count());
-
-			foreach(var package in nearest.Packages)
-			{
-				//忽略依赖中的系统包或框架内置包
-				if(package.Id.StartsWith("System.") || package.Id.StartsWith("Microsoft.Extensions."))
-					continue;
-
-				var path = await DownloadPackageAsync(variables, package.Id, package.VersionRange.MinVersion, cancellation);
-				result.Add(path);
-			}
-
-			return result;
-		}
-
-		private static SourceRepository GetRepository(IDictionary<string, string> variables) => Repository.Factory.GetCoreV3(NugetUtility.GetNugetServer(variables));
 		#endregion
 
 		#region 嵌套结构
