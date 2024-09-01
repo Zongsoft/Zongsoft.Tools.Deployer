@@ -112,11 +112,16 @@ namespace Zongsoft.Tools.Deployer
 
 				//将依赖包的库目录加入到部署源中
 				foreach(var dependent in dependents)
-					directories.Add(NugetUtility.GetNearestLibraryPath(dependent, framework));
+				{
+					var direcotry = NugetUtility.GetNearestLibraryPath(dependent, framework);
+
+					if(!string.IsNullOrEmpty(direcotry))
+						directories.Add(direcotry);
+				}
 
 				var result = new List<DeploymentUtility.PathToken>();
-				foreach(var source in directories)
-					result.AddRange(DeploymentUtility.GetFiles(Path.Combine(source, "*"), context.Variables));
+				foreach(var directory in directories)
+					result.AddRange(DeploymentUtility.GetFiles(Path.Combine(directory, "*"), context.Variables));
 				return result;
 			}
 
