@@ -136,7 +136,7 @@ namespace Zongsoft.Tools.Deployer
 			//创建部署上下文对象
 			var context = this.CreateContext(deploymentFilePath, destinationDirectory);
 
-			foreach(var item in context.Profile.Items)
+			foreach(var item in context.Profile)
 			{
 				await this.DeployItemAsync(context, item, cancellation);
 			}
@@ -171,7 +171,7 @@ namespace Zongsoft.Tools.Deployer
 						)
 					);
 
-					foreach(var child in section.Items)
+					foreach(var child in section)
 						await this.DeployItemAsync(context, child, cancellation);
 
 					break;

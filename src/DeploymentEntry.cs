@@ -86,7 +86,7 @@ namespace Zongsoft.Tools.Deployer
 			};
 
 			var sourceName = context.Normalize(source, variable => context.Deployer.Terminal.UndefinedVariable(variable, source, entry.Profile.FilePath, entry.LineNumber));
-			var sourcePath = Path.IsPathRooted(sourceName) ? sourceName : context.SourceDirectory;
+			var sourcePath = Path.IsPathRooted(sourceName) ? Path.GetDirectoryName(sourceName) : Path.GetDirectoryName(entry.Profile.FilePath);
 
 			var destinationName = string.IsNullOrWhiteSpace(destination) ? string.Empty : context.Normalize(destination, variable => context.Deployer.Terminal.UndefinedVariable(variable, destination, entry.Profile.FilePath, entry.LineNumber));
 			var destinationPath = entry.Section == null ? context.DestinationDirectory : Path.Combine(context.DestinationDirectory,

@@ -54,11 +54,10 @@ namespace Zongsoft.Tools.Deployer
 		#endregion
 
 		#region 公共属性
-		public Deployer Deployer { get; init; }
-		public DeploymentCounter Counter { get; init; }
-		public string DestinationDirectory { get; init; }
-		public Configuration.Profiles.Profile Profile { get; init; }
-		public string SourceDirectory => Path.GetDirectoryName(this.Profile.FilePath);
+		public Deployer Deployer { get; }
+		public DeploymentCounter Counter { get; }
+		public string DestinationDirectory { get; }
+		public Configuration.Profiles.Profile Profile { get; }
 		public IDictionary<string, string> Variables => this.Deployer.Variables;
 		#endregion
 

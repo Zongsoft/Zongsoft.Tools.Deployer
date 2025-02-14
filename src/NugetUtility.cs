@@ -180,8 +180,8 @@ namespace Zongsoft.Tools.Deployer
 
 			foreach(var package in nearest.Packages)
 			{
-				//忽略依赖中的系统包或框架内置包
-				if(package.Id.StartsWith("System.") || package.Id.StartsWith("Microsoft.Extensions."))
+				//忽略依赖中的系统包、框架内置包以及 Zongsoft 包
+				if(package.Id.StartsWith("System.") || package.Id.StartsWith("Microsoft.Extensions.") || package.Id.StartsWith("Zongsoft."))
 					continue;
 
 				var path = await DownloadPackageAsync(variables, package.Id, package.VersionRange.MinVersion, cancellation);
